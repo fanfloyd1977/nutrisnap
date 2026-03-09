@@ -1132,6 +1132,71 @@ function setLogError(msg) {
 
 // ─── Gemini Photo Analysis ────────────────────────────────────────
 
+const GEMINI_MODEL = 'gemini-1.5-flash'; // more generous free tier (15 RPM)
+const GEMINI_PROMPT = `Analyze this food photo. List every food item you can see with estimated weight in grams.
+Return ONLY a JSON array like this, no other text:
+[
+  {"food": "white rice", "grams": 200},
+  {"food": "grilled chicken breast", "grams": 150},
+  {"food": "broccoli", "grams": 100}
+]
+Be specific with food names for better nutrition lookup accuracy.`;
+
+function setSpinnerText(msg) {
+  const el = document.querySelector('#spinner .spinner-text');
+  if (el) el.textContent = msg;
+}
+
+// Countdown display while waiting to retry
+function spinnerCountdown(seconds) {
+  return new Promise(resolve => {
+    let remaining = Math.ceil(seconds);
+    setSpinnerText(`Rate limit hit — retrying in ${remaining}s... ⏳`);
+    const iv = setInterval(() => {
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(iv);
+        setSpinnerText('Gemini is identifying your food... 🤔');
+        resolve();
+      } else {
+        setSpinnerText(`Rate limit hit — retrying in ${remaining}s... ⏳`);
+      }
+    }, 1000);
+  });
+}
+
+async function callGemini(apiKey, body, attemptsLeft = 3) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+  if (resp.status === 429 || resp.status === 503) {
+    const errData = await resp.json().catch(() => ({}));
+    const errMsg  = errData?.error?.message || '';
+
+    // Extract retry delay from message e.g. "Please retry in 28.9 seconds"
+    const delayMatch = errMsg.match(/retry[^0-9]*([0-9]+(?:\.[0-9]+)?)\s*s/i);
+    const delaySec   = delayMatch ? parseFloat(delayMatch[1]) : 35;
+
+    if (attemptsLeft > 1) {
+      await spinnerCountdown(delaySec + 1); // +1 buffer
+      return callGemini(apiKey, body, attemptsLeft - 1);
+    }
+    throw new Error('Rate limit reached after retries. Please wait a minute and try again.');
+  }
+
+  if (!resp.ok) {
+    const errData = await resp.json().catch(() => ({}));
+    const errMsg  = errData?.error?.message || `HTTP ${resp.status}`;
+    throw new Error(`Gemini API error: ${errMsg}`);
+  }
+
+  return resp.json();
+}
+
 async function analyzePhoto() {
   const apiKey = getSetting(LS_GEMINI, '').trim();
   if (!apiKey) {
@@ -1152,55 +1217,26 @@ async function analyzePhoto() {
   document.getElementById('btn-add-log').style.display = 'none';
   document.getElementById('manual-section').style.display = 'none';
   setLogError('');
+  setSpinnerText('Gemini is identifying your food... 🤔');
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
     const body = {
       contents: [{
         parts: [
-          {
-            inline_data: {
-              mime_type: currentPhotoMime,
-              data: currentPhotoBase64
-            }
-          },
-          {
-            text: `Analyze this food photo. List every food item you can see with estimated weight in grams.
-Return ONLY a JSON array like this, no other text:
-[
-  {"food": "white rice", "grams": 200},
-  {"food": "grilled chicken breast", "grams": 150},
-  {"food": "broccoli", "grams": 100}
-]
-Be specific with food names for better nutrition lookup accuracy.`
-          }
+          { inline_data: { mime_type: currentPhotoMime, data: currentPhotoBase64 } },
+          { text: GEMINI_PROMPT }
         ]
       }]
     };
 
-    const resp = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-
-    if (!resp.ok) {
-      const errData = await resp.json().catch(() => ({}));
-      const errMsg  = errData?.error?.message || `HTTP ${resp.status}`;
-      throw new Error(`Gemini API error: ${errMsg}`);
-    }
-
-    const data = await resp.json();
+    const data    = await callGemini(apiKey, body);
     const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-    // Parse JSON — Gemini sometimes wraps in ```json ... ```
-    const foods = parseGeminiResponse(rawText);
+    const foods   = parseGeminiResponse(rawText);
 
     if (!foods || foods.length === 0) {
       throw new Error('No foods detected. Try a clearer photo, or add items manually below.');
     }
 
-    // Populate food list
     populateFoodList(foods);
     document.getElementById('results-section').style.display = 'block';
     document.getElementById('btn-add-log').style.display = 'flex';
@@ -1208,7 +1244,6 @@ Be specific with food names for better nutrition lookup accuracy.`
   } catch (err) {
     console.error('Gemini error:', err);
     setLogError('❌ ' + (err.message || 'Unknown error'));
-    // Show manual entry as fallback
     document.getElementById('manual-section').style.display = 'block';
     if (document.getElementById('manual-food-list').children.length === 0) {
       addManualFoodRow();
