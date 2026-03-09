@@ -1132,7 +1132,7 @@ function setLogError(msg) {
 
 // ─── Gemini Photo Analysis ────────────────────────────────────────
 
-const GEMINI_MODEL = 'gemini-1.5-flash'; // more generous free tier (15 RPM)
+const GEMINI_MODEL = 'gemini-2.0-flash'; // working model for this key
 const GEMINI_PROMPT = `Analyze this food photo. List every food item you can see with estimated weight in grams.
 Return ONLY a JSON array like this, no other text:
 [
@@ -1166,7 +1166,7 @@ function spinnerCountdown(seconds) {
 }
 
 async function callGemini(apiKey, body, attemptsLeft = 3) {
-  const url = `https://generativelanguage.googleapis.com/v1/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
   const resp = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
