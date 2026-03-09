@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>NutriSnap 🥗</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ─── Reset & Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --green:      #4CAF50;
+  --green-light:#f0f7f0;
+  --green-dark: #388E3C;
+  --orange:     #FF8C42;
+  --red:        #F44336;
+  --yellow:     #FFC107;
+  --gold:       #FFD700;
+  --bg:         #f5f7f5;
+  --card:       #ffffff;
+  --text:       #2d3748;
+  --muted:      #718096;
+  --border:     #e2e8f0;
+  --radius-lg:  16px;
+  --radius-md:  12px;
+  --radius-sm:  8px;
+  --shadow:     0 2px 12px rgba(0,0,0,.08);
+  --shadow-lg:  0 4px 24px rgba(0,0,0,.12);
+  --font:       'Nunito', sans-serif;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 0;
+}
+
+/* ─── App Shell ─────────────────────────────────────────────────── */
+#app {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ─── Screen Management ─────────────────────────────────────────── */
+.screen {
+  display: none;
+  min-height: 100vh;
+  flex-direction: column;
+  padding: 0 0 80px 0;
+  animation: fadeSlideIn .22s ease;
+}
+.screen.active { display: flex; }
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Header Bar ────────────────────────────────────────────────── */
+.header {
+  background: var(--green);
+  color: #fff;
+  padding: 52px 20px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(76,175,80,.3);
+}
+.header-back {
+  background: rgba(255,255,255,.22);
+  border: none;
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.header-back:active { background: rgba(255,255,255,.4); }
+.header-title { font-size: 20px; font-weight: 800; flex: 1; }
+.header-sub   { font-size: 13px; opacity: .85; margin-top: 1px; }
+
+/* ─── Content Area ──────────────────────────────────────────────── */
+.content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+}
+
+/* ─── Cards ─────────────────────────────────────────────────────── */
+.card {
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  margin-bottom: 12px;
+}
+
+/* ─── Buttons ───────────────────────────────────────────────────── */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  border: none;
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .12s, box-shadow .12s, opacity .12s;
+  -webkit-tap-highlight-color: transparent;
+  text-decoration: none;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary   { background: var(--green); color: #fff; box-shadow: 0 2px 8px rgba(76,175,80,.35); }
+.btn-primary:active { box-shadow: 0 1px 4px rgba(76,175,80,.35); }
+.btn-secondary { background: var(--green-light); color: var(--green-dark); }
+.btn-orange    { background: var(--orange); color: #fff; box-shadow: 0 2px 8px rgba(255,140,66,.3); }
+.btn-outline   { background: transparent; color: var(--green-dark); border: 2px solid var(--green); }
+.btn-danger    { background: #fff0f0; color: var(--red); border: 1px solid #fcc; }
+.btn-ghost     { background: transparent; color: var(--muted); padding: 6px 12px; font-size: 13px; }
+.btn:disabled  { opacity: .45; pointer-events: none; }
+.btn-full      { width: 100%; }
+
+/* ─── Form Elements ─────────────────────────────────────────────── */
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.form-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: var(--font);
+  font-size: 15px;
+  color: var(--text);
+  background: #fafafa;
+  transition: border-color .15s;
+  outline: none;
+}
+.form-input:focus { border-color: var(--green); background: #fff; }
+.input-wrap { position: relative; }
+.input-eye {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--muted);
+  padding: 4px;
+  -webkit-tap-highlight-color: transparent;
+}
+.form-hint { font-size: 12px; color: var(--muted); }
+
+/* ─── Progress Bars ─────────────────────────────────────────────── */
+.progress-wrap {
+  background: var(--border);
+  border-radius: 100px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  border-radius: 100px;
+  transition: width .4s ease;
+}
+.progress-lg { height: 14px; }
+.progress-sm { height: 8px; }
+
+/* ─── Calorie Ring (big card) ───────────────────────────────────── */
+.calorie-card { text-align: center; }
+.calorie-numbers {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.calorie-consumed {
+  font-size: 44px;
+  font-weight: 900;
+  color: var(--green);
+  line-height: 1;
+}
+.calorie-sep   { font-size: 22px; color: var(--muted); }
+.calorie-goal  { font-size: 22px; font-weight: 700; color: var(--muted); }
+.calorie-label { font-size: 12px; color: var(--muted); margin-top: 4px; margin-bottom: 12px; }
+
+/* ─── Nutrient Mini-bars ────────────────────────────────────────── */
+.nutrient-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.nutrient-item { display: flex; flex-direction: column; gap: 4px; }
+.nutrient-row  { display: flex; justify-content: space-between; align-items: center; }
+.nutrient-name { font-size: 12px; font-weight: 700; color: var(--text); }
+.nutrient-pct  { font-size: 11px; font-weight: 700; }
+
+/* ─── Nav Buttons (home screen) ─────────────────────────────────── */
+.nav-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 80px;
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color .15s, background .15s, transform .12s;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: var(--shadow);
+}
+.nav-btn:active    { transform: scale(.97); background: var(--green-light); border-color: var(--green); }
+.nav-btn.primary   { background: var(--green); color: #fff; border-color: var(--green); box-shadow: 0 3px 12px rgba(76,175,80,.35); grid-column: 1 / -1; min-height: 68px; flex-direction: row; font-size: 16px; }
+.nav-btn.primary:active { background: var(--green-dark); }
+.nav-btn .nav-icon { font-size: 26px; }
+.nav-btn.primary .nav-icon { font-size: 28px; }
+
+/* ─── Photo Upload Area ─────────────────────────────────────────── */
+.upload-zone {
+  border: 2.5px dashed var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  background: #fafafa;
+  -webkit-tap-highlight-color: transparent;
+}
+.upload-zone:hover,
+.upload-zone.has-photo { border-color: var(--green); background: var(--green-light); }
+.upload-icon  { font-size: 52px; margin-bottom: 10px; }
+.upload-text  { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.upload-hint  { font-size: 13px; color: var(--muted); }
+#file-input   { display: none; }
+
+/* ─── Photo Preview ─────────────────────────────────────────────── */
+#photo-preview {
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  display: none;
+  box-shadow: var(--shadow);
+}
+
+/* ─── Loading Spinner ───────────────────────────────────────────── */
+.spinner-wrap {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+}
+.spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid var(--border);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner-text { font-size: 14px; color: var(--muted); font-weight: 600; }
+
+/* ─── Food List (results) ───────────────────────────────────────── */
+#results-section { display: none; }
+.food-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.food-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--green-light);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  border: 1px solid rgba(76,175,80,.2);
+}
+.food-name-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  outline: none;
+  min-width: 0;
+}
+.food-grams-input {
+  width: 62px;
+  border: none;
+  background: rgba(255,255,255,.7);
+  border-radius: 6px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green-dark);
+  text-align: right;
+  padding: 4px 6px;
+  outline: none;
+}
+.food-unit { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+.food-del  {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 2px 4px;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+.food-del:active { color: var(--red); }
+
+/* ─── Error Banner ──────────────────────────────────────────────── */
+.error-banner {
+  display: none;
+  background: #fff5f5;
+  border: 1px solid #fcc;
+  border-radius: var(--radius-md);
+  padding: 14px;
+  font-size: 13px;
+  color: #c53030;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* ─── Settings ──────────────────────────────────────────────────── */
+.settings-section { border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 4px; }
+.settings-section:last-child { border-bottom: none; }
+
+/* ─── Toast Notification ────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #2d3748;
+  color: #fff;
+  padding: 12px 22px;
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  z-index: 9999;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2);
+}
+#toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+#toast.success { background: var(--green); }
+#toast.error   { background: var(--red); }
+
+/* ─── Home greeting ─────────────────────────────────────────────── */
+.home-header {
+  background: linear-gradient(135deg, var(--green) 0%, #66BB6A 100%);
+  color: #fff;
+  padding: 52px 20px 24px;
+  text-align: center;
+}
+.home-greeting { font-size: 14px; opacity: .85; margin-bottom: 2px; }
+.home-title    { font-size: 28px; font-weight: 900; }
+.home-date     { font-size: 13px; opacity: .8; margin-top: 4px; }
+
+/* ─── Status bar indicator ──────────────────────────────────────── */
+.status-dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+/* ─── Divider ───────────────────────────────────────────────────── */
+.divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+/* ─── PIN Lock Screen ───────────────────────────────────────────── */
+#lock-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: linear-gradient(160deg, #2d5a30 0%, #1a3d1c 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  gap: 0;
+}
+#lock-screen.hidden { display: none; }
+
+.lock-logo  { font-size: 52px; margin-bottom: 10px; }
+.lock-title { font-size: 26px; font-weight: 900; color: #fff; margin-bottom: 4px; }
+.lock-sub   { font-size: 14px; color: rgba(255,255,255,.65); margin-bottom: 32px; text-align: center; }
+
+.pin-dots {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.pin-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255,255,255,.5);
+  background: transparent;
+  transition: background .15s, border-color .15s;
+}
+.pin-dot.filled { background: #fff; border-color: #fff; }
+.pin-dot.error  { background: var(--red); border-color: var(--red); animation: shake .3s ease; }
+
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-6px); }
+  60%     { transform: translateX(6px); }
+}
+
+.pin-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 72px);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.pin-key {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.14);
+  color: #fff;
+  font-family: var(--font);
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .12s, transform .1s;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pin-key:active { background: rgba(255,255,255,.3); transform: scale(.93); }
+.pin-key.empty  { background: transparent; pointer-events: none; }
+.pin-key.del    { font-size: 20px; background: rgba(255,255,255,.08); }
+
+.lock-msg {
+  font-size: 14px;
+  font-weight: 700;
+  min-height: 20px;
+  color: #ff8a80;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.lock-link {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.5);
+  font-family: var(--font);
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: 12px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ─── Info row ──────────────────────────────────────────────────── */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+}
+.info-row .label { color: var(--muted); }
+.info-row .val   { font-weight: 700; }
+
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ════════════════════════════════════════════════
+       SCREEN: HOME DASHBOARD
+  ═══════════════════════════════════════════════════ -->
+  <div id="screen-home" class="screen">
+
+    <div class="home-header">
+      <div class="home-greeting">Welcome back! 👋</div>
+      <div class="home-title">NutriSnap 🥗</div>
+      <div class="home-date" id="home-date"></div>
+    </div>
+
+    <div class="content">
+
+      <!-- Calories card -->
+      <div class="card calorie-card">
+        <div class="card-title">Today's Calories</div>
+        <div class="calorie-numbers">
+          <span class="calorie-consumed" id="cal-consumed">0</span>
+          <span class="calorie-sep">/</span>
+          <span class="calorie-goal" id="cal-goal">2000</span>
+        </div>
+        <div class="calorie-label">kcal consumed of daily goal</div>
+        <div class="progress-wrap progress-lg">
+          <div class="progress-bar" id="cal-bar" style="width:0%; background: var(--green);"></div>
+        </div>
+      </div>
+
+      <!-- Nutrient mini-bars card -->
+      <div class="card">
+        <div class="card-title">Key Nutrients — Today</div>
+        <div class="nutrient-grid" id="nutrient-grid">
+          <!-- populated by JS -->
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="card">
+        <div class="card-title">Quick Actions</div>
+        <div class="nav-grid">
+          <button class="nav-btn primary" onclick="showScreen('screen-log')">
+            <span class="nav-icon">📷</span>
+            Log a Meal
+          </button>
+          <button class="nav-btn" onclick="showScreen('screen-meals')">
+            <span class="nav-icon">📋</span>
+            Today's Meals
+          </button>
+          <button class="nav-btn" onclick="showScreen('screen-settings')">
+            <span class="nav-icon">⚙️</span>
+            Settings
+          </button>
+        </div>
+      </div>
+
+      <!-- API key warning (shown if key not set) -->
+      <div id="key-warning" class="error-banner" style="display:none;">
+        ⚠️ Gemini API key not set — tap <strong>Settings</strong> to add your key so you can analyze food photos.
+      </div>
+
+    </div>
+  </div><!-- /screen-home -->
+
+
+  <!-- ════════════════════════════════════════════════
+       SCREEN: LOG A MEAL
+  ═══════════════════════════════════════════════════ -->
+  <div id="screen-log" class="screen">
+
+    <div class="header">
+      <button class="header-back" onclick="showScreen('screen-home')">←</button>
+      <div>
+        <div class="header-title">Log a Meal</div>
+        <div class="header-sub">Take or upload a food photo</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- Photo upload -->
+      <div class="card">
+        <div class="card-title">Step 1 — Choose Photo</div>
+        <input type="file" id="file-input" accept="image/*" capture="environment">
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+          <div class="upload-icon">📸</div>
+          <div class="upload-text">Tap to take or upload photo</div>
+          <div class="upload-hint">Works with your iPhone camera too</div>
+        </div>
+        <img id="photo-preview" alt="Food preview">
+      </div>
+
+      <!-- Analyze button -->
+      <button class="btn btn-primary btn-full" id="btn-analyze" disabled onclick="analyzePhoto()">
+        🔍 Analyze Photo
+      </button>
+
+      <!-- Spinner -->
+      <div class="spinner-wrap" id="spinner">
+        <div class="spinner"></div>
+        <div class="spinner-text">Gemini is identifying your food... 🤔</div>
+      </div>
+
+      <!-- Error banner -->
+      <div class="error-banner" id="log-error"></div>
+
+      <!-- Results -->
+      <div id="results-section" class="card">
+        <div class="card-title">Step 2 — Confirm Foods Detected</div>
+        <div class="food-list" id="food-list"></div>
+        <button class="btn btn-ghost btn-full" onclick="addFoodRow()">
+          ➕ Add item manually
+        </button>
+      </div>
+
+      <!-- Add to log button -->
+      <button class="btn btn-orange btn-full" id="btn-add-log" style="display:none;" onclick="addMealToLog()">
+        ✅ Add to Today's Log
+      </button>
+
+      <!-- Manual entry fallback -->
+      <div id="manual-section" style="display:none;" class="card">
+        <div class="card-title">Manual Entry</div>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">
+          Type your foods below and tap "Add to Today's Log"
+        </p>
+        <div class="food-list" id="manual-food-list"></div>
+        <button class="btn btn-ghost btn-full" onclick="addManualFoodRow()">
+          ➕ Add food item
+        </button>
+      </div>
+
+    </div>
+  </div><!-- /screen-log -->
+
+
+  <!-- ════════════════════════════════════════════════
+       SCREEN: TODAY'S MEALS (Phase 2 placeholder)
+  ═══════════════════════════════════════════════════ -->
+  <div id="screen-meals" class="screen">
+
+    <div class="header">
+      <button class="header-back" onclick="showScreen('screen-home')">←</button>
+      <div>
+        <div class="header-title">Today's Meals</div>
+        <div class="header-sub" id="meals-date"></div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="card" style="text-align:center; padding: 40px 20px;">
+        <div style="font-size:48px; margin-bottom:12px;">🍽️</div>
+        <div style="font-weight:800; font-size:17px; margin-bottom:8px;">No meals logged yet</div>
+        <div style="color:var(--muted); font-size:14px; margin-bottom:20px;">
+          Snap a photo to start tracking your nutrition!
+        </div>
+        <button class="btn btn-primary" onclick="showScreen('screen-log')">📷 Log a Meal</button>
+      </div>
+
+      <div id="meal-list" class="card" style="display:none;">
+        <!-- Populated in Phase 2 -->
+      </div>
+    </div>
+  </div><!-- /screen-meals -->
+
+
+  <!-- ════════════════════════════════════════════════
+       SCREEN: SETTINGS
+  ═══════════════════════════════════════════════════ -->
+  <div id="screen-settings" class="screen">
+
+    <div class="header">
+      <button class="header-back" onclick="showScreen('screen-home')">←</button>
+      <div>
+        <div class="header-title">Settings ⚙️</div>
+        <div class="header-sub">API keys &amp; preferences</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- Gemini API Key -->
+      <div class="card">
+        <div class="card-title settings-section" style="border-bottom:none;margin-bottom:4px;">Gemini API Key</div>
+        <div class="form-group">
+          <div class="input-wrap">
+            <input type="password" class="form-input" id="s-gemini-key"
+              placeholder="Paste your Gemini API key here">
+            <button class="input-eye" onclick="toggleKeyVis('s-gemini-key', this)" title="Show/hide">👁️</button>
+          </div>
+          <div class="form-hint">
+            Used to analyze food photos. Get a free key at
+            <a href="https://aistudio.google.com/app/apikey" target="_blank"
+               style="color:var(--green);font-weight:700;">aistudio.google.com</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- USDA API Key -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:8px;">USDA FoodData API Key</div>
+        <div class="form-group">
+          <div class="input-wrap">
+            <input type="password" class="form-input" id="s-usda-key"
+              placeholder="USDA API key (optional for basic use)">
+            <button class="input-eye" onclick="toggleKeyVis('s-usda-key', this)" title="Show/hide">👁️</button>
+          </div>
+          <div class="form-hint">Pre-filled from your settings. Used for nutrition lookups (Phase 2).</div>
+        </div>
+      </div>
+
+      <!-- Daily goal -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:8px;">Daily Calorie Goal</div>
+        <div class="form-group">
+          <input type="number" class="form-input" id="s-calorie-goal"
+            min="500" max="5000" step="50" placeholder="2000">
+          <div class="form-hint">Default is 2000 kcal/day.</div>
+        </div>
+      </div>
+
+      <!-- PIN lock -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:8px;">App PIN Lock 🔒</div>
+        <div id="pin-status-msg" style="font-size:13px; color:var(--muted); margin-bottom:10px;"></div>
+        <div class="form-group" id="pin-current-wrap" style="display:none;">
+          <label class="form-label">Current PIN</label>
+          <input type="password" class="form-input" id="s-pin-current" maxlength="4"
+            inputmode="numeric" pattern="[0-9]*" placeholder="Enter current 4-digit PIN">
+        </div>
+        <div class="form-group">
+          <label class="form-label" id="s-pin-new-label">New PIN (4 digits)</label>
+          <input type="password" class="form-input" id="s-pin-new" maxlength="4"
+            inputmode="numeric" pattern="[0-9]*" placeholder="Choose a 4-digit PIN">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm PIN</label>
+          <input type="password" class="form-input" id="s-pin-confirm" maxlength="4"
+            inputmode="numeric" pattern="[0-9]*" placeholder="Repeat your PIN">
+        </div>
+        <button class="btn btn-secondary btn-full" onclick="savePin()" style="margin-top:4px;">
+          🔑 Set / Update PIN
+        </button>
+      </div>
+
+      <!-- Save button -->
+      <button class="btn btn-primary btn-full" onclick="saveSettings()">
+        💾 Save Settings
+      </button>
+
+      <!-- Divider -->
+      <div class="divider"></div>
+
+      <!-- Danger zone -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:8px; color: var(--red);">Danger Zone</div>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">
+          This will permanently delete all your logged meals and cannot be undone.
+        </p>
+        <button class="btn btn-danger btn-full" onclick="clearHistory()">
+          🗑️ Clear All Meal History
+        </button>
+      </div>
+
+      <!-- App info -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:8px;">About NutriSnap</div>
+        <div class="info-row">
+          <span class="label">Version</span>
+          <span class="val">1.0 — Phase 1</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Photo AI</span>
+          <span class="val">Gemini 2.0 Flash</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Nutrition DB</span>
+          <span class="val">USDA FoodData Central</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Storage</span>
+          <span class="val">Local (your device only)</span>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /screen-settings -->
+
+</div><!-- /app -->
+
+<!-- ─── PIN Lock Screen ───────────────────────────────────────────── -->
+<div id="lock-screen">
+  <div class="lock-logo">🔒</div>
+  <div class="lock-title">NutriSnap</div>
+  <div class="lock-sub" id="lock-sub">Enter your PIN to continue</div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+  </div>
+  <div class="lock-msg" id="lock-msg"></div>
+  <div class="pin-pad">
+    <button class="pin-key" onclick="pinKey('1')">1</button>
+    <button class="pin-key" onclick="pinKey('2')">2</button>
+    <button class="pin-key" onclick="pinKey('3')">3</button>
+    <button class="pin-key" onclick="pinKey('4')">4</button>
+    <button class="pin-key" onclick="pinKey('5')">5</button>
+    <button class="pin-key" onclick="pinKey('6')">6</button>
+    <button class="pin-key" onclick="pinKey('7')">7</button>
+    <button class="pin-key" onclick="pinKey('8')">8</button>
+    <button class="pin-key" onclick="pinKey('9')">9</button>
+    <button class="pin-key empty"></button>
+    <button class="pin-key" onclick="pinKey('0')">0</button>
+    <button class="pin-key del" onclick="pinBackspace()">⌫</button>
+  </div>
+  <button class="lock-link" id="lock-reset-btn" onclick="pinReset()" style="display:none;">
+    Forgot PIN? Reset app data
+  </button>
+</div>
+
+<!-- ─── Toast ────────────────────────────────────────────────────── -->
+<div id="toast"></div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ─── Daily Reference Values ─────────────────────────────────────
+const DRV = {
+  calories:   { name: 'Calories',    unit: 'kcal', dv: 2000,  id: 1008 },
+  protein:    { name: 'Protein',     unit: 'g',    dv: 50,    id: 1003 },
+  carbs:      { name: 'Carbs',       unit: 'g',    dv: 275,   id: 1005 },
+  fat:        { name: 'Fat',         unit: 'g',    dv: 78,    id: 1004 },
+  fiber:      { name: 'Fiber',       unit: 'g',    dv: 28,    id: 1079 },
+  vitA:       { name: 'Vitamin A',   unit: 'mcg',  dv: 900,   id: 1106 },
+  vitC:       { name: 'Vitamin C',   unit: 'mg',   dv: 90,    id: 1162 },
+  vitD:       { name: 'Vitamin D',   unit: 'mcg',  dv: 20,    id: 1114 },
+  vitE:       { name: 'Vitamin E',   unit: 'mg',   dv: 15,    id: 1109 },
+  vitK:       { name: 'Vitamin K',   unit: 'mcg',  dv: 120,   id: 1185 },
+  vitB1:      { name: 'Vit B1',      unit: 'mg',   dv: 1.2,   id: 1165 },
+  vitB2:      { name: 'Vit B2',      unit: 'mg',   dv: 1.3,   id: 1166 },
+  vitB3:      { name: 'Vit B3',      unit: 'mg',   dv: 16,    id: 1167 },
+  vitB6:      { name: 'Vit B6',      unit: 'mg',   dv: 1.7,   id: 1175 },
+  vitB12:     { name: 'Vit B12',     unit: 'mcg',  dv: 2.4,   id: 1178 },
+  folate:     { name: 'Folate',      unit: 'mcg',  dv: 400,   id: 1177 },
+  calcium:    { name: 'Calcium',     unit: 'mg',   dv: 1300,  id: 1087 },
+  iron:       { name: 'Iron',        unit: 'mg',   dv: 18,    id: 1089 },
+  magnesium:  { name: 'Magnesium',   unit: 'mg',   dv: 420,   id: 1090 },
+  phosphorus: { name: 'Phosphorus',  unit: 'mg',   dv: 1250,  id: 1091 },
+  potassium:  { name: 'Potassium',   unit: 'mg',   dv: 4700,  id: 1092 },
+  sodium:     { name: 'Sodium',      unit: 'mg',   dv: 2300,  id: 1093 },
+  zinc:       { name: 'Zinc',        unit: 'mg',   dv: 11,    id: 1095 },
+};
+
+// Nutrients shown on the home dashboard mini-bars (top 6)
+const HOME_NUTRIENTS = ['protein', 'vitC', 'calcium', 'iron', 'vitD', 'zinc'];
+
+// ─── localStorage keys ───────────────────────────────────────────
+const LS_GEMINI   = 'ns_gemini_key';
+const LS_USDA     = 'ns_usda_key';
+const LS_GOAL     = 'ns_calorie_goal';
+const LS_MEALS    = 'ns_meals';
+
+// ─── State ───────────────────────────────────────────────────────
+let currentPhotoBase64 = null;   // raw base64 (no prefix)
+let currentPhotoMime   = 'image/jpeg';
+
+// ─── Helpers ─────────────────────────────────────────────────────
+
+function getSetting(key, fallback) {
+  const v = localStorage.getItem(key);
+  return v !== null ? v : fallback;
+}
+
+function getMeals() {
+  try { return JSON.parse(localStorage.getItem(LS_MEALS) || '[]'); }
+  catch { return []; }
+}
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function todayMeals() {
+  const today = todayISO();
+  return getMeals().filter(m => m.date === today);
+}
+
+function sumNutrient(meals, key) {
+  return meals.reduce((sum, m) => sum + (m.nutrients?.[key] || 0), 0);
+}
+
+function nutrientColor(pct) {
+  if (pct > 100) return '#FFD700';
+  if (pct >= 75)  return '#4CAF50';
+  if (pct >= 25)  return '#FFC107';
+  return '#F44336';
+}
+
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+function fmtDate(d) {
+  return d.toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+  });
+}
+
+// ─── Screen Routing ──────────────────────────────────────────────
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(id);
+  if (target) target.classList.add('active');
+  window.scrollTo(0, 0);
+
+  // Lifecycle hooks
+  if (id === 'screen-home')     refreshHome();
+  if (id === 'screen-settings') loadSettings();
+  if (id === 'screen-log')      resetLogScreen();
+  if (id === 'screen-meals')    refreshMeals();
+}
+
+// ─── Toast ───────────────────────────────────────────────────────
+
+let toastTimer = null;
+function showToast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 3000);
+}
+
+// ─── Home Dashboard ──────────────────────────────────────────────
+
+function refreshHome() {
+  // Date
+  document.getElementById('home-date').textContent = fmtDate(new Date());
+
+  // Meals for today
+  const meals = todayMeals();
+  const goal  = parseInt(getSetting(LS_GOAL, '2000'), 10);
+  const consumed = Math.round(sumNutrient(meals, 'calories'));
+
+  // Calorie bar
+  document.getElementById('cal-consumed').textContent = consumed.toLocaleString();
+  document.getElementById('cal-goal').textContent     = goal.toLocaleString();
+  const calPct = clamp(Math.round(consumed / goal * 100), 0, 100);
+  document.getElementById('cal-bar').style.width = calPct + '%';
+
+  // Nutrient mini-bars
+  const grid = document.getElementById('nutrient-grid');
+  grid.innerHTML = '';
+  HOME_NUTRIENTS.forEach(key => {
+    const info  = DRV[key];
+    const val   = sumNutrient(meals, key);
+    const pct   = clamp(Math.round(val / info.dv * 100), 0, 200);
+    const color = nutrientColor(pct);
+    const barW  = clamp(pct, 0, 100);
+    const label = pct > 100 ? '⭐ ' + pct + '%' : pct + '%';
+
+    grid.innerHTML += `
+      <div class="nutrient-item">
+        <div class="nutrient-row">
+          <span class="nutrient-name">${info.name}</span>
+          <span class="nutrient-pct" style="color:${color}">${label}</span>
+        </div>
+        <div class="progress-wrap progress-sm">
+          <div class="progress-bar" style="width:${barW}%; background:${color};"></div>
+        </div>
+      </div>`;
+  });
+
+  // API key warning
+  const key = getSetting(LS_GEMINI, '');
+  document.getElementById('key-warning').style.display = key ? 'none' : 'block';
+}
+
+// ─── Today's Meals (placeholder, Phase 2 will fill this) ─────────
+
+function refreshMeals() {
+  document.getElementById('meals-date').textContent = fmtDate(new Date());
+  const meals = todayMeals();
+  const placeholder = document.querySelector('#screen-meals .card');
+  const mealList = document.getElementById('meal-list');
+
+  if (meals.length === 0) {
+    if (placeholder) placeholder.style.display = '';
+    mealList.style.display = 'none';
+  } else {
+    if (placeholder) placeholder.style.display = 'none';
+    mealList.style.display = '';
+    mealList.innerHTML = `<div class="card-title">${meals.length} meal${meals.length > 1 ? 's' : ''} today</div>`;
+    meals.forEach((m, i) => {
+      const cals = Math.round(m.nutrients?.calories || 0);
+      mealList.innerHTML += `
+        <div class="info-row">
+          <span class="label">${m.time || ''} — ${m.label || 'Meal ' + (i+1)}</span>
+          <span class="val">${cals} kcal</span>
+        </div>`;
+    });
+  }
+}
+
+// ─── Settings ────────────────────────────────────────────────────
+
+function loadSettings() {
+  document.getElementById('s-gemini-key').value   = getSetting(LS_GEMINI, '');
+  document.getElementById('s-usda-key').value     = getSetting(LS_USDA, 'l4TzSP7TsYvr8IZ5d4ybJNPK6d4U8ldDuxK77POR');
+  document.getElementById('s-calorie-goal').value = getSetting(LS_GOAL, '2000');
+  loadPinSettingsUI();
+}
+
+function saveSettings() {
+  const gemini = document.getElementById('s-gemini-key').value.trim();
+  const usda   = document.getElementById('s-usda-key').value.trim();
+  const goal   = document.getElementById('s-calorie-goal').value.trim();
+
+  localStorage.setItem(LS_GEMINI, gemini);
+  localStorage.setItem(LS_USDA, usda);
+  localStorage.setItem(LS_GOAL, goal || '2000');
+  showToast('✅ Settings saved!');
+}
+
+function clearHistory() {
+  if (!confirm('Delete ALL meal history? This cannot be undone.')) return;
+  localStorage.removeItem(LS_MEALS);
+  showToast('🗑️ Meal history cleared', 'error');
+}
+
+function toggleKeyVis(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else                         { inp.type = 'password'; btn.textContent = '👁️'; }
+}
+
+// ─── Log a Meal ──────────────────────────────────────────────────
+
+function resetLogScreen() {
+  currentPhotoBase64 = null;
+  currentPhotoMime   = 'image/jpeg';
+  document.getElementById('file-input').value = '';
+  document.getElementById('photo-preview').style.display = 'none';
+  document.getElementById('photo-preview').src = '';
+  document.getElementById('upload-zone').classList.remove('has-photo');
+  document.getElementById('btn-analyze').disabled = true;
+  document.getElementById('spinner').style.display = 'none';
+  document.getElementById('results-section').style.display = 'none';
+  document.getElementById('btn-add-log').style.display = 'none';
+  document.getElementById('manual-section').style.display = 'none';
+  document.getElementById('food-list').innerHTML = '';
+  setLogError('');
+}
+
+// Photo file selected
+document.getElementById('file-input').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  currentPhotoMime = file.type || 'image/jpeg';
+
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    const dataUrl = ev.target.result;
+    // Strip prefix:  "data:image/jpeg;base64,..."
+    currentPhotoBase64 = dataUrl.split(',')[1];
+
+    // Show preview
+    const preview = document.getElementById('photo-preview');
+    preview.src = dataUrl;
+    preview.style.display = 'block';
+    document.getElementById('upload-zone').classList.add('has-photo');
+    document.getElementById('btn-analyze').disabled = false;
+
+    // Hide previous results
+    document.getElementById('results-section').style.display = 'none';
+    document.getElementById('btn-add-log').style.display = 'none';
+    setLogError('');
+  };
+  reader.readAsDataURL(file);
+});
+
+function setLogError(msg) {
+  const el = document.getElementById('log-error');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+// ─── Gemini Photo Analysis ────────────────────────────────────────
+
+async function analyzePhoto() {
+  const apiKey = getSetting(LS_GEMINI, '').trim();
+  if (!apiKey) {
+    setLogError('⚠️ No Gemini API key set. Go to Settings to add your key.');
+    showScreen('screen-settings');
+    return;
+  }
+  if (!currentPhotoBase64) {
+    setLogError('Please select a photo first.');
+    return;
+  }
+
+  // Show spinner, hide previous results
+  document.getElementById('btn-analyze').disabled = true;
+  document.getElementById('spinner').style.flexDirection = 'column';
+  document.getElementById('spinner').style.display = 'flex';
+  document.getElementById('results-section').style.display = 'none';
+  document.getElementById('btn-add-log').style.display = 'none';
+  document.getElementById('manual-section').style.display = 'none';
+  setLogError('');
+
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const body = {
+      contents: [{
+        parts: [
+          {
+            inline_data: {
+              mime_type: currentPhotoMime,
+              data: currentPhotoBase64
+            }
+          },
+          {
+            text: `Analyze this food photo. List every food item you can see with estimated weight in grams.
+Return ONLY a JSON array like this, no other text:
+[
+  {"food": "white rice", "grams": 200},
+  {"food": "grilled chicken breast", "grams": 150},
+  {"food": "broccoli", "grams": 100}
+]
+Be specific with food names for better nutrition lookup accuracy.`
+          }
+        ]
+      }]
+    };
+
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    if (!resp.ok) {
+      const errData = await resp.json().catch(() => ({}));
+      const errMsg  = errData?.error?.message || `HTTP ${resp.status}`;
+      throw new Error(`Gemini API error: ${errMsg}`);
+    }
+
+    const data = await resp.json();
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    // Parse JSON — Gemini sometimes wraps in ```json ... ```
+    const foods = parseGeminiResponse(rawText);
+
+    if (!foods || foods.length === 0) {
+      throw new Error('No foods detected. Try a clearer photo, or add items manually below.');
+    }
+
+    // Populate food list
+    populateFoodList(foods);
+    document.getElementById('results-section').style.display = 'block';
+    document.getElementById('btn-add-log').style.display = 'flex';
+
+  } catch (err) {
+    console.error('Gemini error:', err);
+    setLogError('❌ ' + (err.message || 'Unknown error'));
+    // Show manual entry as fallback
+    document.getElementById('manual-section').style.display = 'block';
+    if (document.getElementById('manual-food-list').children.length === 0) {
+      addManualFoodRow();
+    }
+  } finally {
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('btn-analyze').disabled = false;
+  }
+}
+
+// Parse Gemini response — handles both raw JSON and ```json blocks
+function parseGeminiResponse(text) {
+  // Try to extract JSON array from markdown code block
+  const match = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  const jsonStr = match ? match[1].trim() : text.trim();
+
+  // Find first [ and last ]
+  const start = jsonStr.indexOf('[');
+  const end   = jsonStr.lastIndexOf(']');
+  if (start === -1 || end === -1) return null;
+
+  try {
+    const arr = JSON.parse(jsonStr.slice(start, end + 1));
+    // Validate structure
+    return arr.filter(item => typeof item.food === 'string' && typeof item.grams === 'number');
+  } catch {
+    return null;
+  }
+}
+
+// ─── Food List Rendering ──────────────────────────────────────────
+
+function populateFoodList(foods) {
+  const list = document.getElementById('food-list');
+  list.innerHTML = '';
+  foods.forEach(item => addFoodRow(item.food, item.grams));
+}
+
+function makeFoodItem(food = '', grams = 100, listId = 'food-list') {
+  const item = document.createElement('div');
+  item.className = 'food-item';
+  item.innerHTML = `
+    <input type="text"   class="food-name-input"  value="${esc(food)}"  placeholder="Food name">
+    <input type="number" class="food-grams-input" value="${grams}" min="1" max="2000">
+    <span class="food-unit">g</span>
+    <button class="food-del" onclick="this.parentElement.remove()" title="Remove">✕</button>`;
+  document.getElementById(listId).appendChild(item);
+}
+
+function addFoodRow(food = '', grams = 100) {
+  makeFoodItem(food, grams, 'food-list');
+}
+
+function addManualFoodRow() {
+  makeFoodItem('', 100, 'manual-food-list');
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// ─── Add Meal to Log ──────────────────────────────────────────────
+
+function addMealToLog() {
+  // Collect foods from both lists
+  const foods = collectFoods('food-list').concat(collectFoods('manual-food-list'));
+  if (foods.length === 0) {
+    showToast('⚠️ No foods to log!', 'error');
+    return;
+  }
+
+  // Build meal object (nutrients will be populated in Phase 2 via USDA)
+  const now  = new Date();
+  const meal = {
+    id:        Date.now(),
+    date:      todayISO(),
+    time:      now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+    label:     foods.map(f => f.food).join(', ').slice(0, 40),
+    foods:     foods,
+    nutrients: {},      // Phase 2 will populate this via USDA lookup
+    photoData: currentPhotoBase64 ? currentPhotoBase64.slice(0, 200) : null, // tiny ref only
+  };
+
+  // Save to localStorage
+  const meals = getMeals();
+  meals.push(meal);
+  localStorage.setItem(LS_MEALS, JSON.stringify(meals));
+
+  showToast('✅ Meal logged!');
+  resetLogScreen();
+  showScreen('screen-home');
+}
+
+function collectFoods(listId) {
+  const list = document.getElementById(listId);
+  const items = list ? list.querySelectorAll('.food-item') : [];
+  const result = [];
+  items.forEach(item => {
+    const nameEl  = item.querySelector('.food-name-input');
+    const gramsEl = item.querySelector('.food-grams-input');
+    const name  = nameEl?.value.trim();
+    const grams = parseFloat(gramsEl?.value) || 0;
+    if (name && grams > 0) result.push({ food: name, grams });
+  });
+  return result;
+}
+
+// ─── PIN Lock ─────────────────────────────────────────────────────
+
+const LS_PIN_HASH  = 'ns_pin_hash';
+let pinBuffer      = '';      // digits typed so far
+let pinMode        = 'enter'; // 'enter' | 'setup'
+
+async function sha256hex(str) {
+  const buf  = new TextEncoder().encode(str);
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function pinUpdateDots() {
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('pd' + i);
+    dot.classList.toggle('filled', i < pinBuffer.length);
+    dot.classList.remove('error');
+  }
+}
+
+function pinSetMsg(msg) {
+  document.getElementById('lock-msg').textContent = msg;
+}
+
+function pinKey(digit) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += digit;
+  pinUpdateDots();
+  if (pinBuffer.length === 4) {
+    setTimeout(() => pinSubmit(), 80);
+  }
+}
+
+function pinBackspace() {
+  pinBuffer = pinBuffer.slice(0, -1);
+  pinUpdateDots();
+  pinSetMsg('');
+}
+
+async function pinSubmit() {
+  const hash = await sha256hex(pinBuffer);
+
+  if (pinMode === 'setup') {
+    // First time — save the PIN hash and unlock
+    localStorage.setItem(LS_PIN_HASH, hash);
+    unlockApp();
+    return;
+  }
+
+  // Enter mode — verify
+  const storedHash = localStorage.getItem(LS_PIN_HASH);
+  if (hash === storedHash) {
+    unlockApp();
+  } else {
+    pinSetMsg('Incorrect PIN. Try again.');
+    // Flash dots red
+    for (let i = 0; i < 4; i++) {
+      const dot = document.getElementById('pd' + i);
+      dot.classList.add('error');
+    }
+    setTimeout(() => {
+      pinBuffer = '';
+      pinUpdateDots();
+    }, 600);
+  }
+}
+
+function unlockApp() {
+  document.getElementById('lock-screen').classList.add('hidden');
+  showScreen('screen-home');
+}
+
+function pinReset() {
+  if (!confirm('This will clear your PIN and ALL meal data. Continue?')) return;
+  localStorage.removeItem(LS_PIN_HASH);
+  localStorage.removeItem(LS_MEALS);
+  pinBuffer = '';
+  pinMode   = 'setup';
+  document.getElementById('lock-sub').textContent = 'Choose a 4-digit PIN to protect your app';
+  document.getElementById('lock-reset-btn').style.display = 'none';
+  pinUpdateDots();
+  pinSetMsg('');
+}
+
+// Settings — save PIN
+async function savePin() {
+  const newPin     = document.getElementById('s-pin-new').value.trim();
+  const confirmPin = document.getElementById('s-pin-confirm').value.trim();
+  const currentPin = document.getElementById('s-pin-current').value.trim();
+
+  if (!/^\d{4}$/.test(newPin)) {
+    showToast('PIN must be exactly 4 digits', 'error'); return;
+  }
+  if (newPin !== confirmPin) {
+    showToast('PINs do not match', 'error'); return;
+  }
+
+  const existingHash = localStorage.getItem(LS_PIN_HASH);
+  if (existingHash) {
+    // Verify current PIN before changing
+    if (!/^\d{4}$/.test(currentPin)) {
+      showToast('Enter your current PIN first', 'error'); return;
+    }
+    const currentHash = await sha256hex(currentPin);
+    if (currentHash !== existingHash) {
+      showToast('Current PIN is incorrect', 'error'); return;
+    }
+  }
+
+  const newHash = await sha256hex(newPin);
+  localStorage.setItem(LS_PIN_HASH, newHash);
+
+  // Clear fields
+  document.getElementById('s-pin-current').value = '';
+  document.getElementById('s-pin-new').value     = '';
+  document.getElementById('s-pin-confirm').value = '';
+  loadPinSettingsUI();
+  showToast('🔒 PIN saved!');
+}
+
+function loadPinSettingsUI() {
+  const hasPinHash = !!localStorage.getItem(LS_PIN_HASH);
+  document.getElementById('pin-status-msg').textContent = hasPinHash
+    ? '✅ PIN is set. Enter your current PIN to change it.'
+    : '⚠️ No PIN set — anyone with the URL can open the app.';
+  document.getElementById('pin-current-wrap').style.display = hasPinHash ? 'flex' : 'none';
+  document.getElementById('s-pin-new-label').textContent = hasPinHash ? 'New PIN (4 digits)' : 'Set PIN (4 digits)';
+}
+
+// ─── Init ─────────────────────────────────────────────────────────
+
+(function init() {
+  // Seed USDA key in localStorage if not already set
+  if (!localStorage.getItem(LS_USDA)) {
+    localStorage.setItem(LS_USDA, 'l4TzSP7TsYvr8IZ5d4ybJNPK6d4U8ldDuxK77POR');
+  }
+
+  const storedHash = localStorage.getItem(LS_PIN_HASH);
+  if (!storedHash) {
+    // First time — prompt to create a PIN
+    pinMode = 'setup';
+    document.getElementById('lock-sub').textContent = 'Choose a 4-digit PIN to protect your app';
+    document.getElementById('lock-reset-btn').style.display = 'none';
+  } else {
+    // PIN exists — show lock screen
+    pinMode = 'enter';
+    document.getElementById('lock-sub').textContent = 'Enter your PIN to continue';
+    document.getElementById('lock-reset-btn').style.display = 'block';
+  }
+  // Lock screen is visible by default (no .hidden class on load)
+})();
+
+</script>
+</body>
+</html>
