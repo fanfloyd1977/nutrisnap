@@ -553,6 +553,38 @@ body {
 .info-row .label { color: var(--muted); }
 .info-row .val   { font-weight: 700; }
 
+/* ─── Nutrition detail ───────────────────────────────────────────── */
+.nutr-row {
+  display: flex;
+  align-items: center;
+  padding: 6px 0;
+  gap: 8px;
+}
+.nutr-name  { flex: 0 0 100px; font-size: 13px; color: var(--text); }
+.nutr-bar-wrap { flex: 1; background: #eee; border-radius: 99px; height: 8px; overflow: hidden; }
+.nutr-bar   { height: 100%; border-radius: 99px; transition: width .4s ease; }
+.nutr-pct   { flex: 0 0 46px; font-size: 12px; font-weight: 700; text-align: right; }
+.nutr-val   { flex: 0 0 70px; font-size: 11px; color: var(--muted); text-align: right; }
+.section-label { font-size: 11px; font-weight: 800; letter-spacing: .07em;
+                 text-transform: uppercase; color: var(--muted); margin: 10px 0 4px; }
+
+/* ─── Suggestions ────────────────────────────────────────────────── */
+.suggestion-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; }
+.suggestion-icon { font-size: 22px; flex-shrink: 0; }
+.suggestion-text { font-size: 13px; }
+.suggestion-text strong { color: var(--text); }
+.suggestion-foods { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+/* ─── History ────────────────────────────────────────────────────── */
+.history-day  { border-radius: 14px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.07);
+                margin-bottom: 10px; overflow: hidden; }
+.history-hdr  { display: flex; justify-content: space-between; align-items: center;
+                padding: 14px 16px; cursor: pointer; }
+.history-date { font-weight: 800; font-size: 15px; }
+.history-cals { font-weight: 800; color: var(--green); font-size: 15px; }
+.history-body { padding: 0 16px 12px; border-top: 1px solid var(--border); display: none; }
+.history-body.open { display: block; }
+
 </style>
 </head>
 <body>
@@ -593,6 +625,11 @@ body {
         </div>
       </div>
 
+      <!-- Full report link -->
+      <div style="text-align:center; margin: -4px 0 4px;">
+        <button class="link-btn" onclick="showScreen('screen-nutrition')">📊 See full nutrition report →</button>
+      </div>
+
       <!-- Navigation -->
       <div class="card">
         <div class="card-title">Quick Actions</div>
@@ -604,6 +641,10 @@ body {
           <button class="nav-btn" onclick="showScreen('screen-meals')">
             <span class="nav-icon">📋</span>
             Today's Meals
+          </button>
+          <button class="nav-btn" onclick="showScreen('screen-history')">
+            <span class="nav-icon">📅</span>
+            History
           </button>
           <button class="nav-btn" onclick="showScreen('screen-settings')">
             <span class="nav-icon">⚙️</span>
@@ -721,6 +762,42 @@ body {
     </div>
   </div><!-- /screen-meals -->
 
+
+  <!-- ════════════════════════════════════════════════
+       SCREEN: NUTRITION DETAIL
+  ═══════════════════════════════════════════════════ -->
+  <div id="screen-nutrition" class="screen">
+    <div class="header">
+      <button class="header-back" onclick="showScreen('screen-home')">←</button>
+      <div>
+        <div class="header-title">Nutrition Report 📊</div>
+        <div class="header-sub" id="nutr-date"></div>
+      </div>
+    </div>
+    <div class="content">
+      <div id="nutr-summary" class="card"></div>
+      <div id="nutr-macros" class="card"></div>
+      <div id="nutr-vitamins" class="card"></div>
+      <div id="nutr-minerals" class="card"></div>
+      <div id="nutr-suggestions" class="card" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       SCREEN: HISTORY
+  ═══════════════════════════════════════════════════ -->
+  <div id="screen-history" class="screen">
+    <div class="header">
+      <button class="header-back" onclick="showScreen('screen-home')">←</button>
+      <div>
+        <div class="header-title">Meal History 📅</div>
+        <div class="header-sub">Past 14 days</div>
+      </div>
+    </div>
+    <div class="content">
+      <div id="history-list"></div>
+    </div>
+  </div>
 
   <!-- ════════════════════════════════════════════════
        SCREEN: SETTINGS
@@ -975,10 +1052,12 @@ function showScreen(id) {
   window.scrollTo(0, 0);
 
   // Lifecycle hooks
-  if (id === 'screen-home')     refreshHome();
-  if (id === 'screen-settings') loadSettings();
-  if (id === 'screen-log')      resetLogScreen();
-  if (id === 'screen-meals')    refreshMeals();
+  if (id === 'screen-home')      refreshHome();
+  if (id === 'screen-settings')  loadSettings();
+  if (id === 'screen-log')       resetLogScreen();
+  if (id === 'screen-meals')     refreshMeals();
+  if (id === 'screen-nutrition') refreshNutrition();
+  if (id === 'screen-history')   refreshHistory();
 }
 
 // ─── Toast ───────────────────────────────────────────────────────
@@ -1446,6 +1525,159 @@ function collectFoods(listId) {
     if (name && grams > 0) result.push({ food: name, grams });
   });
   return result;
+}
+
+// ─── Phase 3: Nutrition Detail ────────────────────────────────────
+
+const NUTRIENT_GROUPS = {
+  'Macronutrients': ['calories','protein','carbs','fat','fiber'],
+  'Vitamins':       ['vitA','vitC','vitD','vitE','vitK','vitB1','vitB2','vitB3','vitB6','vitB12','folate'],
+  'Minerals':       ['calcium','iron','magnesium','phosphorus','potassium','sodium','zinc'],
+};
+
+const FOOD_SOURCES = {
+  protein:    ['chicken breast','eggs','Greek yogurt','lentils','tuna'],
+  fiber:      ['oats','beans','lentils','avocado','chia seeds'],
+  vitA:       ['sweet potato','carrots','spinach','kale','eggs'],
+  vitC:       ['oranges','bell peppers','broccoli','strawberries','kiwi'],
+  vitD:       ['salmon','tuna','egg yolks','fortified milk','mushrooms'],
+  vitE:       ['almonds','sunflower seeds','avocado','spinach','olive oil'],
+  vitK:       ['kale','spinach','broccoli','Brussels sprouts','natto'],
+  vitB1:      ['pork','sunflower seeds','black beans','edamame','asparagus'],
+  vitB2:      ['beef liver','milk','almonds','mushrooms','eggs'],
+  vitB3:      ['chicken','tuna','turkey','peanuts','mushrooms'],
+  vitB6:      ['chickpeas','beef','tuna','salmon','potatoes'],
+  vitB12:     ['beef','salmon','milk','eggs','fortified cereals'],
+  folate:     ['lentils','spinach','asparagus','avocado','edamame'],
+  calcium:    ['milk','yogurt','cheese','tofu','sardines'],
+  iron:       ['red meat','lentils','spinach','tofu','dark chocolate'],
+  magnesium:  ['almonds','spinach','black beans','avocado','dark chocolate'],
+  phosphorus: ['milk','salmon','lentils','pumpkin seeds','chicken'],
+  potassium:  ['banana','sweet potato','spinach','avocado','salmon'],
+  zinc:       ['beef','pumpkin seeds','chickpeas','cashews','oysters'],
+};
+
+function nutrBarHtml(key, val) {
+  const drv   = DRV[key];
+  const pct   = clamp(Math.round(val / drv.dv * 100), 0, 200);
+  const barW  = clamp(pct, 0, 100);
+  const color = nutrientColor(pct);
+  const label = pct > 100 ? '⭐ ' + pct + '%' : pct + '%';
+  const shown = val >= 1 ? val.toFixed(1) + ' ' + drv.unit : '0 ' + drv.unit;
+  return `
+    <div class="nutr-row">
+      <span class="nutr-name">${drv.name}</span>
+      <div class="nutr-bar-wrap"><div class="nutr-bar" style="width:${barW}%;background:${color};"></div></div>
+      <span class="nutr-pct" style="color:${color}">${label}</span>
+      <span class="nutr-val">${shown}</span>
+    </div>`;
+}
+
+function refreshNutrition() {
+  document.getElementById('nutr-date').textContent = fmtDate(new Date());
+  const meals = todayMeals();
+  const goal  = parseInt(getSetting(LS_GOAL, '2000'), 10);
+
+  // Summary card
+  const cals    = Math.round(sumNutrient(meals, 'calories'));
+  const protein = Math.round(sumNutrient(meals, 'protein'));
+  const carbs   = Math.round(sumNutrient(meals, 'carbs'));
+  const fat     = Math.round(sumNutrient(meals, 'fat'));
+  const calPct  = clamp(Math.round(cals / goal * 100), 0, 100);
+  document.getElementById('nutr-summary').innerHTML = `
+    <div class="card-title">Today's Summary</div>
+    <div class="calorie-numbers" style="font-size:32px;">
+      <span style="color:var(--green);font-weight:800;">${cals.toLocaleString()}</span>
+      <span style="color:var(--muted);font-size:18px;"> / ${goal.toLocaleString()} kcal</span>
+    </div>
+    <div class="progress-wrap progress-lg" style="margin:10px 0;">
+      <div class="progress-bar" style="width:${calPct}%;background:var(--green);"></div>
+    </div>
+    <div class="meal-macros">
+      Protein: <span>${protein}g</span> &nbsp; Carbs: <span>${carbs}g</span> &nbsp; Fat: <span>${fat}g</span>
+    </div>`;
+
+  // Nutrient group cards
+  ['nutr-macros','nutr-vitamins','nutr-minerals'].forEach((id, gi) => {
+    const groupName = Object.keys(NUTRIENT_GROUPS)[gi];
+    const keys      = NUTRIENT_GROUPS[groupName];
+    let html = `<div class="card-title">${groupName}</div>`;
+    keys.forEach(key => {
+      const val = sumNutrient(meals, key);
+      html += nutrBarHtml(key, val);
+    });
+    document.getElementById(id).innerHTML = html;
+  });
+
+  // Suggestions for nutrients < 25%
+  const low = Object.keys(DRV).filter(key => {
+    if (key === 'calories' || key === 'sodium') return false;
+    const pct = sumNutrient(meals, key) / DRV[key].dv * 100;
+    return pct < 25 && FOOD_SOURCES[key];
+  }).slice(0, 5);
+
+  const sugEl = document.getElementById('nutr-suggestions');
+  if (low.length === 0 || meals.length === 0) {
+    sugEl.style.display = 'none';
+  } else {
+    sugEl.style.display = '';
+    sugEl.innerHTML = `<div class="card-title">💡 Boost These Nutrients</div>` +
+      low.map(key => `
+        <div class="suggestion-item">
+          <div class="suggestion-icon">🥗</div>
+          <div class="suggestion-text">
+            <strong>Need more ${DRV[key].name}</strong>
+            <div class="suggestion-foods">Try: ${FOOD_SOURCES[key].slice(0,3).join(', ')}</div>
+          </div>
+        </div>`).join('<div class="divider"></div>');
+  }
+}
+
+// ─── Phase 3: History ─────────────────────────────────────────────
+
+function refreshHistory() {
+  const allMeals = getMeals();
+  const container = document.getElementById('history-list');
+
+  // Group by date, last 14 days
+  const days = {};
+  allMeals.forEach(m => {
+    if (!days[m.date]) days[m.date] = [];
+    days[m.date].push(m);
+  });
+
+  const sortedDates = Object.keys(days).sort((a, b) => b.localeCompare(a)).slice(0, 14);
+
+  if (sortedDates.length === 0) {
+    container.innerHTML = `<div class="card" style="text-align:center;padding:40px 20px;">
+      <div style="font-size:48px;margin-bottom:12px;">📅</div>
+      <div style="font-weight:800;font-size:17px;">No history yet</div>
+      <div style="color:var(--muted);font-size:14px;margin-top:8px;">Log meals to see your history here.</div>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = sortedDates.map((date, i) => {
+    const meals    = days[date];
+    const totalCal = Math.round(meals.reduce((s, m) => s + (m.nutrients?.calories || 0), 0));
+    const label    = date === todayISO() ? 'Today' : new Date(date + 'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    const foodList = meals.flatMap(m => m.foods.map(f => f.food)).slice(0, 6).join(', ');
+    return `
+      <div class="history-day">
+        <div class="history-hdr" onclick="toggleHistory(this)">
+          <span class="history-date">${label}</span>
+          <span class="history-cals">${totalCal} kcal</span>
+        </div>
+        <div class="history-body">
+          <div style="font-size:12px;color:var(--muted);margin-top:8px;">${meals.length} meal${meals.length>1?'s':''} · ${foodList}${meals.flatMap(m=>m.foods).length > 6 ? '…' : ''}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleHistory(hdr) {
+  const body = hdr.nextElementSibling;
+  body.classList.toggle('open');
 }
 
 // ─── PIN Lock ─────────────────────────────────────────────────────
