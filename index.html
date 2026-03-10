@@ -1396,34 +1396,42 @@ async function addMealToLog() {
   btn.disabled = true;
   btn.textContent = '⏳ Looking up nutrition...';
 
-  const usdaKey = getSetting(LS_USDA, '').trim();
-  const foodsWithNutrients = [];
-  const totalNutrients = {};
+  try {
+    const usdaKey = getSetting(LS_USDA, '').trim();
+    const foodsWithNutrients = [];
+    const totalNutrients = {};
 
-  for (const f of foods) {
-    const nutrients = usdaKey ? await lookupNutrition(f.food, f.grams, usdaKey) : {};
-    foodsWithNutrients.push({ ...f, nutrients });
-    for (const [k, v] of Object.entries(nutrients)) {
-      totalNutrients[k] = (totalNutrients[k] || 0) + v;
+    for (const f of foods) {
+      const nutrients = usdaKey ? await lookupNutrition(f.food, f.grams, usdaKey) : {};
+      foodsWithNutrients.push({ ...f, nutrients });
+      for (const [k, v] of Object.entries(nutrients)) {
+        totalNutrients[k] = (totalNutrients[k] || 0) + v;
+      }
     }
+
+    const now  = new Date();
+    const meal = {
+      id:        Date.now(),
+      date:      todayISO(),
+      time:      now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      foods:     foodsWithNutrients,
+      nutrients: totalNutrients,
+    };
+
+    const meals = getMeals();
+    meals.push(meal);
+    localStorage.setItem(LS_MEALS, JSON.stringify(meals));
+
+    showToast('✅ Meal logged!');
+    resetLogScreen();
+    showScreen('screen-home');
+  } catch (err) {
+    console.error('addMealToLog error:', err);
+    showToast('❌ Error saving meal. Try again.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✅ Add to Today\'s Log';
   }
-
-  const now  = new Date();
-  const meal = {
-    id:        Date.now(),
-    date:      todayISO(),
-    time:      now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-    foods:     foodsWithNutrients,
-    nutrients: totalNutrients,
-  };
-
-  const meals = getMeals();
-  meals.push(meal);
-  localStorage.setItem(LS_MEALS, JSON.stringify(meals));
-
-  showToast('✅ Meal logged!');
-  resetLogScreen();
-  showScreen('screen-home');
 }
 
 function collectFoods(listId) {
