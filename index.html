@@ -640,11 +640,11 @@ body {
       <div class="card">
         <div class="card-title">Step 1 — Choose Photo</div>
         <input type="file" id="file-input" accept="image/*">
-        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+        <label for="file-input" class="upload-zone" id="upload-zone">
           <div class="upload-icon">📸</div>
           <div class="upload-text">Tap to take or upload photo</div>
-          <div class="upload-hint">Works with your iPhone camera too</div>
-        </div>
+          <div class="upload-hint">Camera, Photo Library, or Browse</div>
+        </label>
         <img id="photo-preview" alt="Food preview">
       </div>
 
