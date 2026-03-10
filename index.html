@@ -1510,7 +1510,6 @@ function populateFoodList(foods) {
 let _acTimer = null;
 function _setupFoodAC(input) {
   input.setAttribute('list', 'food-suggestions');
-  input.setAttribute('autocomplete', 'off');
   input.addEventListener('input', function() {
     clearTimeout(_acTimer);
     const q = this.value.trim();
