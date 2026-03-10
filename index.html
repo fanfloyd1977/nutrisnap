@@ -2044,7 +2044,7 @@ Return ONLY a valid JSON array, no other text, no markdown:
     intro.innerHTML = `<button class="btn btn-ghost btn-full" onclick="generateSuggestions()">🔄 Refresh Suggestions</button>`;
 
   } catch (err) {
-    errEl.style.display = '';
+    errEl.style.display = 'block';
     errEl.textContent   = '❌ ' + (err.message || 'Could not generate suggestions. Try again.');
     intro.style.display = '';
     intro.innerHTML = `<button class="btn btn-ghost btn-full" onclick="generateSuggestions()">🔄 Try Again</button>`;
