@@ -1186,25 +1186,22 @@ async function callGemini(apiKey, body, attemptsLeft = 3) {
     body: JSON.stringify(body)
   });
 
-  if (resp.status === 429 || resp.status === 503) {
-    const errData = await resp.json().catch(() => ({}));
-    const errMsg  = errData?.error?.message || '';
-
-    // Extract retry delay from message e.g. "Please retry in 28.9 seconds"
-    const delayMatch = errMsg.match(/retry[^0-9]*([0-9]+(?:\.[0-9]+)?)\s*s/i);
-    const delaySec   = delayMatch ? parseFloat(delayMatch[1]) : 35;
-
-    if (attemptsLeft > 1) {
-      await spinnerCountdown(delaySec + 1); // +1 buffer
-      return callGemini(apiKey, body, attemptsLeft - 1);
-    }
-    throw new Error('Rate limit reached after retries. Please wait a minute and try again.');
-  }
-
   if (!resp.ok) {
     const errData = await resp.json().catch(() => ({}));
     const errMsg  = errData?.error?.message || `HTTP ${resp.status}`;
-    throw new Error(`Gemini API error: ${errMsg}`);
+    console.error(`Gemini ${resp.status}:`, JSON.stringify(errData));
+
+    if (resp.status === 429 || resp.status === 503) {
+      const delayMatch = errMsg.match(/retry[^0-9]*([0-9]+(?:\.[0-9]+)?)\s*s/i);
+      const delaySec   = delayMatch ? parseFloat(delayMatch[1]) : 35;
+      if (attemptsLeft > 1) {
+        await spinnerCountdown(delaySec + 1);
+        return callGemini(apiKey, body, attemptsLeft - 1);
+      }
+      throw new Error(`Rate limit after retries. API said: ${errMsg}`);
+    }
+
+    throw new Error(`Gemini error ${resp.status}: ${errMsg}`);
   }
 
   return resp.json();
