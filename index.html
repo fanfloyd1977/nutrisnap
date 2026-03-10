@@ -328,6 +328,16 @@ body {
 
 /* ─── Food List (results) ───────────────────────────────────────── */
 #results-section { display: none; }
+.portion-row { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+.portion-btn {
+  flex:1; min-width:54px; padding:6px 4px; font-size:12px; font-weight:700;
+  border:2px solid rgba(76,175,80,.3); border-radius:20px;
+  background:var(--green-light); color:var(--green-dark); cursor:pointer;
+  transition:background .15s, border-color .15s;
+}
+.portion-btn.active {
+  background:var(--green); color:#fff; border-color:var(--green);
+}
 .food-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
 .food-item {
   display: flex;
@@ -720,6 +730,15 @@ body {
       <!-- Results -->
       <div id="results-section" class="card">
         <div class="card-title">Step 2 — Confirm Foods Detected</div>
+        <!-- Portion selector -->
+        <div style="font-size:12px; color:var(--muted); margin-bottom:6px; font-weight:600;">How much of this dish did you eat?</div>
+        <div class="portion-row" id="portion-row">
+          <button class="portion-btn active" data-pct="100" onclick="setPortion(this)">Full dish</button>
+          <button class="portion-btn" data-pct="75"  onclick="setPortion(this)">3/4</button>
+          <button class="portion-btn" data-pct="50"  onclick="setPortion(this)">Half</button>
+          <button class="portion-btn" data-pct="25"  onclick="setPortion(this)">1/4</button>
+          <button class="portion-btn" data-pct="10"  onclick="setPortion(this)">Taste</button>
+        </div>
         <div class="food-list" id="food-list"></div>
         <button class="btn btn-ghost btn-full" onclick="addFoodRow()">
           ➕ Add item manually
@@ -1504,7 +1523,24 @@ function parseGeminiResponse(text) {
 function populateFoodList(foods) {
   const list = document.getElementById('food-list');
   list.innerHTML = '';
+  // Reset portion to Full dish
+  document.querySelectorAll('.portion-btn').forEach(b => b.classList.toggle('active', b.dataset.pct === '100'));
   foods.forEach(item => addFoodRow(item.food, item.grams));
+  // Store base grams for portion scaling
+  list.querySelectorAll('.food-grams-input').forEach(inp => {
+    inp.dataset.base = inp.value;
+  });
+}
+
+function setPortion(btn) {
+  document.querySelectorAll('.portion-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const pct = parseFloat(btn.dataset.pct) / 100;
+  document.querySelectorAll('#food-list .food-grams-input').forEach(inp => {
+    const base = parseFloat(inp.dataset.base) || parseFloat(inp.value) || 100;
+    inp.dataset.base = inp.dataset.base || base; // keep original if already set
+    inp.value = Math.round(base * pct);
+  });
 }
 
 let _acTimer = null;
