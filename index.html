@@ -1927,7 +1927,8 @@ async function callGroqText(apiKey, prompt) {
     body: JSON.stringify({
       model: 'llama-3.3-70b-versatile',
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 1500
+      max_tokens: 1500,
+      response_format: { type: 'json_object' }
     })
   });
   if (!resp.ok) { const e = await resp.json().catch(()=>({})); throw new Error(`Groq ${resp.status}: ${e?.error?.message || ''}`); }
@@ -2001,22 +2002,21 @@ Rules:
 - Keep it realistic and easy to prepare
 - Vary the meals (breakfast, lunch, dinner, snack)
 
-Return ONLY a valid JSON array, no other text, no markdown:
-[
-  {
-    "name": "Salmon Rice Bowl",
-    "emoji": "🍱",
-    "description": "One sentence describing why this meal is great for them",
-    "helpsNutrients": ["Vitamin D", "Iron"],
-    "ingredients": ["salmon 150g", "white rice 200g", "spinach 80g"],
-    "imageQuery": "salmon rice bowl healthy food"
-  }
-]`;
+Return a JSON object with this exact structure (no other text):
+{"meals":[{"name":"Salmon Rice Bowl","emoji":"🍱","description":"One sentence why great for them","helpsNutrients":["Vitamin D","Iron"],"ingredients":["salmon 150g","white rice 200g","spinach 80g"],"imageQuery":"salmon rice bowl healthy food"}]}`;
 
     const data  = await callGroqText(apiKey, prompt);
     const raw   = data.choices?.[0]?.message?.content || '';
-    const meals = parseGeminiResponse(raw);
-    if (!Array.isArray(meals) || meals.length === 0) throw new Error('No suggestions returned');
+    let meals;
+    try {
+      const parsed = JSON.parse(raw);
+      meals = parsed.meals || parsed;
+    } catch {
+      // fallback: find first [ ... ] in raw text
+      const s = raw.indexOf('['), e = raw.lastIndexOf(']');
+      if (s !== -1 && e !== -1) meals = JSON.parse(raw.slice(s, e + 1));
+    }
+    if (!Array.isArray(meals) || meals.length === 0) throw new Error('No suggestions returned — try again');
 
     cards.innerHTML = meals.map((m, i) => {
       const imgUrl  = `https://source.unsplash.com/400x200/?${encodeURIComponent(m.imageQuery || m.name + ' food')}`;
