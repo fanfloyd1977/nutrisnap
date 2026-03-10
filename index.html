@@ -597,7 +597,7 @@ body {
 
       <!-- API key warning (shown if key not set) -->
       <div id="key-warning" class="error-banner" style="display:none;">
-        ⚠️ Gemini API key not set — tap <strong>Settings</strong> to add your key so you can analyze food photos.
+        ⚠️ Groq API key not set — tap <strong>Settings</strong> to add your key so you can analyze food photos.
       </div>
 
     </div>
@@ -720,19 +720,19 @@ body {
 
     <div class="content">
 
-      <!-- Gemini API Key -->
+      <!-- Groq API Key -->
       <div class="card">
-        <div class="card-title settings-section" style="border-bottom:none;margin-bottom:4px;">Gemini API Key</div>
+        <div class="card-title settings-section" style="border-bottom:none;margin-bottom:4px;">Groq API Key</div>
         <div class="form-group">
           <div class="input-wrap">
             <input type="password" class="form-input" id="s-gemini-key"
-              placeholder="Paste your Gemini API key here">
+              placeholder="Paste your Groq API key here">
             <button class="input-eye" onclick="toggleKeyVis('s-gemini-key', this)" title="Show/hide">👁️</button>
           </div>
           <div class="form-hint">
-            Used to analyze food photos. Get a free key at
-            <a href="https://aistudio.google.com/app/apikey" target="_blank"
-               style="color:var(--green);font-weight:700;">aistudio.google.com</a>
+            Used to analyze food photos. Get a free key (no card needed) at
+            <a href="https://console.groq.com/keys" target="_blank"
+               style="color:var(--green);font-weight:700;">console.groq.com</a>
           </div>
         </div>
       </div>
@@ -1143,10 +1143,10 @@ function setLogError(msg) {
   el.style.display = msg ? 'block' : 'none';
 }
 
-// ─── Gemini Photo Analysis ────────────────────────────────────────
+// ─── Groq Vision Photo Analysis ───────────────────────────────────
 
-const GEMINI_MODEL = 'gemini-2.0-flash'; // working model for this key
-const GEMINI_PROMPT = `Analyze this food photo. List every food item you can see with estimated weight in grams.
+const GROQ_MODEL  = 'llama-3.2-11b-vision-preview';
+const FOOD_PROMPT = `Analyze this food photo. List every food item you can see with estimated weight in grams.
 Return ONLY a JSON array like this, no other text:
 [
   {"food": "white rice", "grams": 200},
@@ -1160,48 +1160,31 @@ function setSpinnerText(msg) {
   if (el) el.textContent = msg;
 }
 
-// Countdown display while waiting to retry
-function spinnerCountdown(seconds) {
-  return new Promise(resolve => {
-    let remaining = Math.ceil(seconds);
-    setSpinnerText(`Rate limit hit — retrying in ${remaining}s... ⏳`);
-    const iv = setInterval(() => {
-      remaining--;
-      if (remaining <= 0) {
-        clearInterval(iv);
-        setSpinnerText('Gemini is identifying your food... 🤔');
-        resolve();
-      } else {
-        setSpinnerText(`Rate limit hit — retrying in ${remaining}s... ⏳`);
-      }
-    }, 1000);
-  });
-}
-
-async function callGemini(apiKey, body, attemptsLeft = 3) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
-  const resp = await fetch(url, {
+async function callGroq(apiKey, base64, mime) {
+  const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image_url', image_url: { url: `data:${mime};base64,${base64}` } },
+          { type: 'text', text: FOOD_PROMPT }
+        ]
+      }],
+      max_tokens: 1024
+    })
   });
 
   if (!resp.ok) {
     const errData = await resp.json().catch(() => ({}));
     const errMsg  = errData?.error?.message || `HTTP ${resp.status}`;
-    console.error(`Gemini ${resp.status}:`, JSON.stringify(errData));
-
-    if (resp.status === 429 || resp.status === 503) {
-      const delayMatch = errMsg.match(/retry[^0-9]*([0-9]+(?:\.[0-9]+)?)\s*s/i);
-      const delaySec   = delayMatch ? parseFloat(delayMatch[1]) : 35;
-      if (attemptsLeft > 1) {
-        await spinnerCountdown(delaySec + 1);
-        return callGemini(apiKey, body, attemptsLeft - 1);
-      }
-      throw new Error(`Rate limit after retries. API said: ${errMsg}`);
-    }
-
-    throw new Error(`Gemini error ${resp.status}: ${errMsg}`);
+    console.error(`Groq ${resp.status}:`, JSON.stringify(errData));
+    throw new Error(`Groq error ${resp.status}: ${errMsg}`);
   }
 
   return resp.json();
@@ -1210,7 +1193,7 @@ async function callGemini(apiKey, body, attemptsLeft = 3) {
 async function analyzePhoto() {
   const apiKey = getSetting(LS_GEMINI, '').trim();
   if (!apiKey) {
-    setLogError('⚠️ No Gemini API key set. Go to Settings to add your key.');
+    setLogError('⚠️ No Groq API key set. Go to Settings to add your key.');
     showScreen('screen-settings');
     return;
   }
@@ -1227,20 +1210,11 @@ async function analyzePhoto() {
   document.getElementById('btn-add-log').style.display = 'none';
   document.getElementById('manual-section').style.display = 'none';
   setLogError('');
-  setSpinnerText('Gemini is identifying your food... 🤔');
+  setSpinnerText('Identifying your food... 🤔');
 
   try {
-    const body = {
-      contents: [{
-        parts: [
-          { inline_data: { mime_type: currentPhotoMime, data: currentPhotoBase64 } },
-          { text: GEMINI_PROMPT }
-        ]
-      }]
-    };
-
-    const data    = await callGemini(apiKey, body);
-    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const data    = await callGroq(apiKey, currentPhotoBase64, currentPhotoMime);
+    const rawText = data?.choices?.[0]?.message?.content || '';
     const foods   = parseGeminiResponse(rawText);
 
     if (!foods || foods.length === 0) {
@@ -1252,7 +1226,7 @@ async function analyzePhoto() {
     document.getElementById('btn-add-log').style.display = 'flex';
 
   } catch (err) {
-    console.error('Gemini error:', err);
+    console.error('Groq error:', err);
     setLogError('❌ ' + (err.message || 'Unknown error'));
     document.getElementById('manual-section').style.display = 'block';
     if (document.getElementById('manual-food-list').children.length === 0) {
