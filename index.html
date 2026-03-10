@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>NutriSnap 🥗</title>
+<title>NutriSnapify 🥗</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -280,6 +280,7 @@ body {
 
 /* ─── Photo Upload Area ─────────────────────────────────────────── */
 .upload-zone {
+  display: block;
   border: 2.5px dashed var(--border);
   border-radius: var(--radius-lg);
   padding: 32px 20px;
@@ -294,7 +295,7 @@ body {
 .upload-icon  { font-size: 52px; margin-bottom: 10px; }
 .upload-text  { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
 .upload-hint  { font-size: 13px; color: var(--muted); }
-#file-input   { display: none; }
+#file-input   { position: absolute; width: 0; height: 0; opacity: 0; overflow: hidden; }
 
 /* ─── Photo Preview ─────────────────────────────────────────────── */
 #photo-preview {
@@ -438,21 +439,26 @@ body {
 .divider { height: 1px; background: var(--border); margin: 4px 0; }
 
 /* ─── Meal Cards (Today's Meals screen) ─────────────────────────── */
-.meal-card { padding: 12px 0; }
-.meal-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
-.meal-time  { font-size:12px; color:var(--muted); }
-.meal-label { font-weight:700; font-size:15px; color:var(--text); }
-.meal-cals  { font-weight:800; color:var(--green); font-size:15px; }
-.btn-delete { background:none; border:none; font-size:16px; cursor:pointer; padding:2px 4px; }
-.food-tags  { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
-.food-tag   { background:var(--light-green); color:var(--green); font-size:12px;
-              font-weight:600; padding:2px 8px; border-radius:20px; }
-.meal-macros { display:flex; gap:12px; margin-top:6px; font-size:12px; color:var(--muted); }
-.meal-macros span { font-weight:600; color:var(--text); }
-.day-total  { background:var(--light-green); border-radius:12px; padding:10px 14px;
-              display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+.meal-card   { padding: 14px 0; }
+.meal-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px; }
+.meal-time   { font-size:11px; color:var(--muted); margin-bottom:2px; }
+.meal-label  { font-weight:800; font-size:16px; color:var(--text); }
+.meal-cals   { font-weight:900; color:var(--green); font-size:18px; line-height:1; }
+.meal-right  { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+.btn-delete  { background:none; border:none; font-size:15px; cursor:pointer; padding:0; color:var(--muted); }
+.food-tags   { display:flex; flex-wrap:wrap; gap:4px; margin: 8px 0; }
+.food-tag    { background:var(--light-green); color:var(--green); font-size:12px;
+               font-weight:600; padding:3px 10px; border-radius:20px; }
+.macro-grid  { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; margin-top:4px; }
+.macro-cell  { background:#f8f8f8; border-radius:10px; padding:6px 4px; text-align:center; }
+.macro-label { font-size:10px; color:var(--muted); font-weight:700; text-transform:uppercase; margin-bottom:2px; }
+.macro-val   { font-size:15px; font-weight:800; color:var(--text); }
+.day-total   { background:var(--light-green); border-radius:12px; padding:12px 14px;
+               display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
 .day-total-label { font-size:13px; color:var(--muted); font-weight:600; }
-.day-total-val   { font-size:18px; font-weight:800; color:var(--green); }
+.day-total-val   { font-size:20px; font-weight:900; color:var(--green); }
+.day-macros  { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:14px; }
+.day-macros .macro-cell { background:var(--light-green); }
 
 /* ─── PIN Lock Screen ───────────────────────────────────────────── */
 #lock-screen {
@@ -568,6 +574,14 @@ body {
 .section-label { font-size: 11px; font-weight: 800; letter-spacing: .07em;
                  text-transform: uppercase; color: var(--muted); margin: 10px 0 4px; }
 
+/* ─── Vitamin Focus badge ────────────────────────────────────────── */
+.nutrient-item.focused { background: var(--light-green); border-radius: 10px;
+                         padding: 4px 8px; margin: 0 -8px; }
+.focus-tag { font-size: 10px; font-weight: 800; color: var(--green);
+             background: #fff; border: 1.5px solid var(--green);
+             border-radius: 20px; padding: 1px 6px; margin-left: 4px;
+             vertical-align: middle; }
+
 /* ─── Suggestions ────────────────────────────────────────────────── */
 .suggestion-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; }
 .suggestion-icon { font-size: 22px; flex-shrink: 0; }
@@ -597,7 +611,7 @@ body {
 
     <div class="home-header">
       <div class="home-greeting">Welcome back! 👋</div>
-      <div class="home-title">NutriSnap 🥗</div>
+      <div class="home-title">NutriSnapify 🥗</div>
       <div class="home-date" id="home-date"></div>
     </div>
 
@@ -854,6 +868,44 @@ body {
         </div>
       </div>
 
+      <!-- Vitamin Focus -->
+      <div class="card">
+        <div class="card-title" style="margin-bottom:8px;">Vitamin / Nutrient Focus 🎯</div>
+        <div class="form-group">
+          <select class="form-input" id="s-vitamin-focus">
+            <option value="">— None —</option>
+            <optgroup label="Macronutrients">
+              <option value="protein">Protein</option>
+              <option value="carbs">Carbs</option>
+              <option value="fat">Fat</option>
+              <option value="fiber">Fiber</option>
+            </optgroup>
+            <optgroup label="Vitamins">
+              <option value="vitA">Vitamin A</option>
+              <option value="vitC">Vitamin C</option>
+              <option value="vitD">Vitamin D</option>
+              <option value="vitE">Vitamin E</option>
+              <option value="vitK">Vitamin K</option>
+              <option value="vitB1">Vitamin B1</option>
+              <option value="vitB2">Vitamin B2</option>
+              <option value="vitB3">Vitamin B3</option>
+              <option value="vitB6">Vitamin B6</option>
+              <option value="vitB12">Vitamin B12</option>
+              <option value="folate">Folate</option>
+            </optgroup>
+            <optgroup label="Minerals">
+              <option value="calcium">Calcium</option>
+              <option value="iron">Iron</option>
+              <option value="magnesium">Magnesium</option>
+              <option value="phosphorus">Phosphorus</option>
+              <option value="potassium">Potassium</option>
+              <option value="zinc">Zinc</option>
+            </optgroup>
+          </select>
+          <div class="form-hint">Highlighted first on your home dashboard.</div>
+        </div>
+      </div>
+
       <!-- PIN lock -->
       <div class="card">
         <div class="card-title" style="margin-bottom:8px;">App PIN Lock 🔒</div>
@@ -899,7 +951,7 @@ body {
 
       <!-- App info -->
       <div class="card">
-        <div class="card-title" style="margin-bottom:8px;">About NutriSnap</div>
+        <div class="card-title" style="margin-bottom:8px;">About NutriSnapify</div>
         <div class="info-row">
           <span class="label">Version</span>
           <span class="val">1.0 — Phase 1</span>
@@ -926,7 +978,7 @@ body {
 <!-- ─── PIN Lock Screen ───────────────────────────────────────────── -->
 <div id="lock-screen">
   <div class="lock-logo">🔒</div>
-  <div class="lock-title">NutriSnap</div>
+  <div class="lock-title">NutriSnapify</div>
   <div class="lock-sub" id="lock-sub">Enter your PIN to continue</div>
   <div class="pin-dots" id="pin-dots">
     <div class="pin-dot" id="pd0"></div>
@@ -998,6 +1050,7 @@ const LS_GEMINI   = 'ns_gemini_key';
 const LS_USDA     = 'ns_usda_key';
 const LS_GOAL     = 'ns_calorie_goal';
 const LS_MEALS    = 'ns_meals';
+const LS_FOCUS    = 'ns_vitamin_focus';
 
 // ─── State ───────────────────────────────────────────────────────
 let currentPhotoBase64 = null;   // raw base64 (no prefix)
@@ -1089,20 +1142,29 @@ function refreshHome() {
   document.getElementById('cal-bar').style.width = calPct + '%';
 
   // Nutrient mini-bars
-  const grid = document.getElementById('nutrient-grid');
+  const focus = getSetting(LS_FOCUS, '');
+  const grid  = document.getElementById('nutrient-grid');
   grid.innerHTML = '';
-  HOME_NUTRIENTS.forEach(key => {
-    const info  = DRV[key];
-    const val   = sumNutrient(meals, key);
-    const pct   = clamp(Math.round(val / info.dv * 100), 0, 200);
-    const color = nutrientColor(pct);
-    const barW  = clamp(pct, 0, 100);
-    const label = pct > 100 ? '⭐ ' + pct + '%' : pct + '%';
+
+  // Put focused nutrient first, then the rest of the default 6
+  const displayKeys = focus && DRV[focus]
+    ? [focus, ...HOME_NUTRIENTS.filter(k => k !== focus)].slice(0, 6)
+    : HOME_NUTRIENTS;
+
+  displayKeys.forEach(key => {
+    const info     = DRV[key];
+    const val      = sumNutrient(meals, key);
+    const pct      = clamp(Math.round(val / info.dv * 100), 0, 200);
+    const color    = nutrientColor(pct);
+    const barW     = clamp(pct, 0, 100);
+    const label    = pct > 100 ? '⭐ ' + pct + '%' : pct + '%';
+    const isFocus  = key === focus;
+    const badge    = isFocus ? '<span class="focus-tag">FOCUS</span>' : '';
 
     grid.innerHTML += `
-      <div class="nutrient-item">
+      <div class="nutrient-item${isFocus ? ' focused' : ''}">
         <div class="nutrient-row">
-          <span class="nutrient-name">${info.name}</span>
+          <span class="nutrient-name">${info.name}${badge}</span>
           <span class="nutrient-pct" style="color:${color}">${label}</span>
         </div>
         <div class="progress-wrap progress-sm">
@@ -1144,10 +1206,10 @@ function refreshMeals() {
       <span class="day-total-label">Total Calories</span>
       <span class="day-total-val">${totalCals.toLocaleString()} kcal</span>
     </div>
-    <div class="meal-macros" style="margin-bottom:12px;">
-      Protein: <span>${totalProtein}g</span> &nbsp;
-      Carbs: <span>${totalCarbs}g</span> &nbsp;
-      Fat: <span>${totalFat}g</span>
+    <div class="day-macros">
+      <div class="macro-cell"><div class="macro-label">Protein</div><div class="macro-val">${totalProtein}g</div></div>
+      <div class="macro-cell"><div class="macro-label">Carbs</div><div class="macro-val">${totalCarbs}g</div></div>
+      <div class="macro-cell"><div class="macro-label">Fat</div><div class="macro-val">${totalFat}g</div></div>
     </div>`;
 
   meals.forEach((m, i) => {
@@ -1163,18 +1225,18 @@ function refreshMeals() {
             <div class="meal-time">${m.time}</div>
             <div class="meal-label">Meal ${i + 1}</div>
           </div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <span class="meal-cals">${cals} kcal</span>
+          <div class="meal-right">
             <button class="btn-delete" onclick="deleteMeal(${m.id})" title="Delete meal">🗑️</button>
+            <span class="meal-cals">${cals} kcal</span>
           </div>
         </div>
         <div class="food-tags">
           ${m.foods.map(f => `<span class="food-tag">${f.food} ${f.grams}g</span>`).join('')}
         </div>
-        <div class="meal-macros">
-          Protein: <span>${protein}g</span> &nbsp;
-          Carbs: <span>${carbs}g</span> &nbsp;
-          Fat: <span>${fat}g</span>
+        <div class="macro-grid">
+          <div class="macro-cell"><div class="macro-label">Protein</div><div class="macro-val">${protein}g</div></div>
+          <div class="macro-cell"><div class="macro-label">Carbs</div><div class="macro-val">${carbs}g</div></div>
+          <div class="macro-cell"><div class="macro-label">Fat</div><div class="macro-val">${fat}g</div></div>
         </div>
       </div>`;
   });
@@ -1193,9 +1255,10 @@ function deleteMeal(id) {
 // ─── Settings ────────────────────────────────────────────────────
 
 function loadSettings() {
-  document.getElementById('s-gemini-key').value   = getSetting(LS_GEMINI, '');
-  document.getElementById('s-usda-key').value     = getSetting(LS_USDA, 'l4TzSP7TsYvr8IZ5d4ybJNPK6d4U8ldDuxK77POR');
-  document.getElementById('s-calorie-goal').value = getSetting(LS_GOAL, '2000');
+  document.getElementById('s-gemini-key').value    = getSetting(LS_GEMINI, '');
+  document.getElementById('s-usda-key').value      = getSetting(LS_USDA, 'l4TzSP7TsYvr8IZ5d4ybJNPK6d4U8ldDuxK77POR');
+  document.getElementById('s-calorie-goal').value  = getSetting(LS_GOAL, '2000');
+  document.getElementById('s-vitamin-focus').value = getSetting(LS_FOCUS, '');
   loadPinSettingsUI();
 }
 
@@ -1203,10 +1266,12 @@ function saveSettings() {
   const gemini = document.getElementById('s-gemini-key').value.trim();
   const usda   = document.getElementById('s-usda-key').value.trim();
   const goal   = document.getElementById('s-calorie-goal').value.trim();
+  const focus  = document.getElementById('s-vitamin-focus').value;
 
   localStorage.setItem(LS_GEMINI, gemini);
   localStorage.setItem(LS_USDA, usda);
   localStorage.setItem(LS_GOAL, goal || '2000');
+  localStorage.setItem(LS_FOCUS, focus);
   showToast('✅ Settings saved!');
 }
 
