@@ -385,6 +385,20 @@ body {
 }
 .food-del:active { color: var(--red); }
 
+/* ─── Meal Suggestions ──────────────────────────────────────────── */
+.suggest-card { background:#fff; border-radius:16px; box-shadow:var(--shadow); margin-bottom:16px; overflow:hidden; }
+.suggest-photo { width:100%; height:160px; object-fit:cover; background:var(--green-light); display:block; }
+.suggest-body  { padding:14px 16px 16px; }
+.suggest-name  { font-size:17px; font-weight:800; margin-bottom:4px; }
+.suggest-desc  { font-size:13px; color:var(--muted); margin-bottom:10px; line-height:1.5; }
+.suggest-badges { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+.suggest-badge  { font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px;
+                  background:var(--green-light); color:var(--green-dark); }
+.suggest-card details { margin-bottom:12px; }
+.suggest-card details summary { font-size:13px; font-weight:700; cursor:pointer;
+                                color:var(--green-dark); margin-bottom:6px; }
+.suggest-ing-list { font-size:13px; color:var(--muted); padding-left:16px; margin:4px 0 0; line-height:1.8; }
+
 /* ─── Error Banner ──────────────────────────────────────────────── */
 .error-banner {
   display: none;
@@ -665,6 +679,10 @@ body {
           <button class="nav-btn" onclick="showScreen('screen-meals')">
             <span class="nav-icon">📋</span>
             Today's Meals
+          </button>
+          <button class="nav-btn" onclick="showScreen('screen-suggest')">
+            <span class="nav-icon">💡</span>
+            Meal Ideas
           </button>
           <button class="nav-btn" onclick="showScreen('screen-history')">
             <span class="nav-icon">📅</span>
@@ -1016,6 +1034,31 @@ body {
     </div>
   </div><!-- /screen-settings -->
 
+  <!-- ═══════════════════════════════════════════════════
+       SCREEN: MEAL IDEAS (Phase 4A)
+  ═══════════════════════════════════════════════════ -->
+  <div id="screen-suggest" class="screen">
+
+    <div class="header">
+      <button class="header-back" onclick="showScreen('screen-home')">←</button>
+      <div>
+        <div class="header-title">💡 Meal Ideas</div>
+        <div class="header-sub">Personalized for your taste &amp; needs</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div id="suggest-intro" class="card" style="text-align:center; padding:32px 20px;"></div>
+      <div id="suggest-spinner" class="spinner-wrap" style="display:none; flex-direction:column;">
+        <div class="spinner"></div>
+        <div class="spinner-text">Crafting meal ideas just for you… 🍽️</div>
+      </div>
+      <div id="suggest-error" class="error-banner"></div>
+      <div id="suggest-cards"></div>
+    </div>
+
+  </div><!-- /screen-suggest -->
+
 </div><!-- /app -->
 
 <!-- ─── PIN Lock Screen ───────────────────────────────────────────── -->
@@ -1154,6 +1197,7 @@ function showScreen(id) {
   if (id === 'screen-meals')     refreshMeals();
   if (id === 'screen-nutrition') refreshNutrition();
   if (id === 'screen-history')   refreshHistory();
+  if (id === 'screen-suggest')   initSuggestScreen();
 }
 
 // ─── Toast ───────────────────────────────────────────────────────
@@ -1845,6 +1889,181 @@ function refreshHistory() {
 function toggleHistory(hdr) {
   const body = hdr.nextElementSibling;
   body.classList.toggle('open');
+}
+
+// ─── Phase 4A: Smart Meal Suggestions ────────────────────────────
+
+function buildSuggestContext() {
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
+  const meals = getMeals().filter(m => new Date(m.date + 'T12:00:00') >= cutoff);
+
+  // Food preferences: frequency count
+  const freq = {};
+  meals.forEach(m => (m.foods || []).forEach(f => {
+    const k = (f.food || '').toLowerCase();
+    if (k) freq[k] = (freq[k] || 0) + 1;
+  }));
+  const favFoods = Object.entries(freq)
+    .sort((a, b) => b[1] - a[1]).slice(0, 8).map(([n]) => n);
+
+  // Nutrient gaps: avg % DV per meal < 50%
+  const gaps = [];
+  if (meals.length > 0) {
+    Object.keys(DRV).forEach(key => {
+      if (key === 'calories' || key === 'sodium') return;
+      const total = meals.reduce((s, m) => s + (m.nutrients?.[key] || 0), 0);
+      const avgPct = (total / meals.length) / DRV[key].dv * 100;
+      if (avgPct < 50) gaps.push({ name: DRV[key].name, pct: Math.round(avgPct) });
+    });
+    gaps.sort((a, b) => a.pct - b.pct);
+  }
+  return { favFoods, gaps: gaps.slice(0, 5), mealCount: meals.length };
+}
+
+async function callGroqText(apiKey, prompt) {
+  const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 1500
+    })
+  });
+  if (!resp.ok) { const e = await resp.json().catch(()=>({})); throw new Error(`Groq ${resp.status}: ${e?.error?.message || ''}`); }
+  return resp.json();
+}
+
+function initSuggestScreen() {
+  const intro   = document.getElementById('suggest-intro');
+  const cards   = document.getElementById('suggest-cards');
+  const errEl   = document.getElementById('suggest-error');
+  errEl.style.display = 'none';
+  // Only show intro if no cards yet
+  if (cards.children.length > 0) { intro.style.display = 'none'; return; }
+  const apiKey = getSetting(LS_GEMINI, '');
+  if (!apiKey) {
+    intro.style.display = '';
+    intro.innerHTML = `<div style="font-size:40px;margin-bottom:12px;">🔑</div>
+      <div style="font-weight:800;font-size:17px;margin-bottom:8px;">Groq Key Needed</div>
+      <div style="color:var(--muted);font-size:14px;margin-bottom:16px;">Add your free Groq API key in Settings to unlock meal suggestions.</div>
+      <button class="btn btn-primary" onclick="showScreen('screen-settings')">Go to Settings</button>`;
+    return;
+  }
+  const { mealCount } = buildSuggestContext();
+  if (mealCount === 0) {
+    intro.style.display = '';
+    intro.innerHTML = `<div style="font-size:40px;margin-bottom:12px;">🥗</div>
+      <div style="font-weight:800;font-size:17px;margin-bottom:8px;">Log Some Meals First</div>
+      <div style="color:var(--muted);font-size:14px;margin-bottom:16px;">We need to see what you eat before we can personalize suggestions for you.</div>
+      <button class="btn btn-primary" onclick="showScreen('screen-log')">Log a Meal</button>`;
+    return;
+  }
+  intro.style.display = '';
+  const lowDataNote = mealCount < 3
+    ? `<div style="font-size:12px;color:var(--muted);margin-top:8px;">Log more meals for even better personalization!</div>` : '';
+  intro.innerHTML = `<div style="font-size:40px;margin-bottom:12px;">✨</div>
+    <div style="font-weight:800;font-size:17px;margin-bottom:8px;">Ready to Suggest!</div>
+    <div style="color:var(--muted);font-size:14px;margin-bottom:16px;">Based on your last ${mealCount} meal${mealCount>1?'s':''}, we'll suggest meals that match your taste and fill your nutrient gaps.</div>
+    <button class="btn btn-primary" onclick="generateSuggestions()">✨ Generate Meal Ideas</button>
+    ${lowDataNote}`;
+}
+
+async function generateSuggestions() {
+  const apiKey = getSetting(LS_GEMINI, '');
+  if (!apiKey) { showToast('⚠️ Add Groq key in Settings', 'error'); return; }
+
+  const spinner = document.getElementById('suggest-spinner');
+  const intro   = document.getElementById('suggest-intro');
+  const errEl   = document.getElementById('suggest-error');
+  const cards   = document.getElementById('suggest-cards');
+
+  intro.style.display   = 'none';
+  spinner.style.display = 'flex';
+  errEl.style.display   = 'none';
+  cards.innerHTML       = '';
+
+  try {
+    const { favFoods, gaps } = buildSuggestContext();
+    const favLine  = favFoods.length ? favFoods.join(', ') : 'varied foods';
+    const gapsLine = gaps.length
+      ? gaps.map(g => `${g.name} (${g.pct}% of daily need)`).join(', ')
+      : 'no major deficiencies — suggest balanced meals';
+
+    const prompt = `You are a nutritionist. Suggest 4 personalized meal ideas for this user.
+
+Their favorite foods (eat often): ${favLine}
+Their biggest nutrient gaps: ${gapsLine}
+
+Rules:
+- Suggest meals that use ingredients similar to what they already like
+- Each meal should meaningfully address at least 1-2 of their nutrient gaps
+- Keep it realistic and easy to prepare
+- Vary the meals (breakfast, lunch, dinner, snack)
+
+Return ONLY a valid JSON array, no other text, no markdown:
+[
+  {
+    "name": "Salmon Rice Bowl",
+    "emoji": "🍱",
+    "description": "One sentence describing why this meal is great for them",
+    "helpsNutrients": ["Vitamin D", "Iron"],
+    "ingredients": ["salmon 150g", "white rice 200g", "spinach 80g"],
+    "imageQuery": "salmon rice bowl healthy food"
+  }
+]`;
+
+    const data  = await callGroqText(apiKey, prompt);
+    const raw   = data.choices?.[0]?.message?.content || '';
+    const meals = parseGeminiResponse(raw);
+    if (!Array.isArray(meals) || meals.length === 0) throw new Error('No suggestions returned');
+
+    cards.innerHTML = meals.map((m, i) => {
+      const imgUrl  = `https://source.unsplash.com/400x200/?${encodeURIComponent(m.imageQuery || m.name + ' food')}`;
+      const badges  = (m.helpsNutrients || []).map(n => `<span class="suggest-badge">↑ ${n}</span>`).join('');
+      const ingList = (m.ingredients || []).map(ing => `<li>${ing}</li>`).join('');
+      const ingData = JSON.stringify(m.ingredients || []).replace(/"/g, '&quot;');
+      return `
+        <div class="suggest-card">
+          <img class="suggest-photo" src="${imgUrl}" loading="lazy" alt="${esc(m.name)}" onerror="this.style.display='none'">
+          <div class="suggest-body">
+            <div class="suggest-name">${m.emoji || '🍽️'} ${esc(m.name)}</div>
+            <div class="suggest-desc">${esc(m.description || '')}</div>
+            <div class="suggest-badges">${badges}</div>
+            <details>
+              <summary>🧂 Ingredients</summary>
+              <ul class="suggest-ing-list">${ingList}</ul>
+            </details>
+            <button class="btn btn-secondary btn-full" onclick="prefillMealLog(${ingData})">➕ Pre-fill Log</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Replace intro with refresh button
+    intro.style.display = '';
+    intro.innerHTML = `<button class="btn btn-ghost btn-full" onclick="generateSuggestions()">🔄 Refresh Suggestions</button>`;
+
+  } catch (err) {
+    errEl.style.display = '';
+    errEl.textContent   = '❌ ' + (err.message || 'Could not generate suggestions. Try again.');
+    intro.style.display = '';
+    intro.innerHTML = `<button class="btn btn-ghost btn-full" onclick="generateSuggestions()">🔄 Try Again</button>`;
+  } finally {
+    spinner.style.display = 'none';
+  }
+}
+
+function prefillMealLog(ingredients) {
+  showScreen('screen-log');
+  document.getElementById('manual-section').style.display = 'block';
+  document.getElementById('btn-add-log').style.display    = 'flex';
+  const list = document.getElementById('manual-food-list');
+  list.innerHTML = '';
+  ingredients.forEach(ing => {
+    const match = ing.match(/^(.+?)\s+(\d+)\s*g$/i);
+    if (match) makeFoodItem(match[1].trim(), parseInt(match[2]), 'manual-food-list');
+    else        makeFoodItem(ing, 100, 'manual-food-list');
+  });
 }
 
 // ─── PIN Lock ─────────────────────────────────────────────────────
