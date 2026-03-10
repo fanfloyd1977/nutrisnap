@@ -444,9 +444,9 @@ body {
 .meal-time   { font-size:11px; color:var(--muted); margin-bottom:2px; }
 .meal-label  { font-weight:800; font-size:16px; color:var(--text); }
 .meal-cals   { font-weight:900; color:var(--green); font-size:18px; line-height:1; }
-.meal-right  { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+.meal-right  { display:flex; flex-direction:column; align-items:flex-end; gap:2px; min-width:90px; }
 .btn-delete  { background:none; border:none; font-size:15px; cursor:pointer; padding:0; color:var(--muted); }
-.food-tags   { display:flex; flex-wrap:wrap; gap:4px; margin: 8px 0; }
+.food-tags   { display:flex; flex-wrap:wrap; align-items:flex-start; gap:4px; margin: 8px 0; }
 .food-tag    { background:var(--light-green); color:var(--green); font-size:12px;
                font-weight:600; padding:3px 10px; border-radius:20px; }
 .macro-grid  { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; margin-top:4px; }
@@ -1201,16 +1201,24 @@ function refreshMeals() {
   const totalFat     = Math.round(meals.reduce((s, m) => s + (m.nutrients?.fat      || 0), 0));
 
   let html = `
-    <div class="card-title">Today — ${meals.length} meal${meals.length > 1 ? 's' : ''}</div>
-    <div class="day-total">
-      <span class="day-total-label">Total Calories</span>
-      <span class="day-total-val">${totalCals.toLocaleString()} kcal</span>
+    <div class="meal-card" style="background:var(--light-green);border-radius:12px;padding:12px 14px;margin-bottom:4px;">
+      <div class="meal-header">
+        <div>
+          <div class="meal-time">TODAY — ${meals.length} meal${meals.length > 1 ? 's' : ''}</div>
+          <div class="meal-label">Total</div>
+        </div>
+        <div class="meal-right">
+          <span style="width:15px;"></span>
+          <span class="meal-cals">${totalCals.toLocaleString()} kcal</span>
+        </div>
+      </div>
+      <div class="macro-grid" style="margin-top:8px;">
+        <div class="macro-cell" style="background:rgba(255,255,255,.7);"><div class="macro-label">Protein</div><div class="macro-val">${totalProtein}g</div></div>
+        <div class="macro-cell" style="background:rgba(255,255,255,.7);"><div class="macro-label">Carbs</div><div class="macro-val">${totalCarbs}g</div></div>
+        <div class="macro-cell" style="background:rgba(255,255,255,.7);"><div class="macro-label">Fat</div><div class="macro-val">${totalFat}g</div></div>
+      </div>
     </div>
-    <div class="day-macros">
-      <div class="macro-cell"><div class="macro-label">Protein</div><div class="macro-val">${totalProtein}g</div></div>
-      <div class="macro-cell"><div class="macro-label">Carbs</div><div class="macro-val">${totalCarbs}g</div></div>
-      <div class="macro-cell"><div class="macro-label">Fat</div><div class="macro-val">${totalFat}g</div></div>
-    </div>`;
+    <div style="margin-bottom:8px;"></div>`;
 
   meals.forEach((m, i) => {
     const cals    = Math.round(m.nutrients?.calories || 0);
