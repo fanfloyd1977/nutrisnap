@@ -399,6 +399,25 @@ body {
                                 color:var(--green-dark); margin-bottom:6px; }
 .suggest-ing-list { font-size:13px; color:var(--muted); padding-left:16px; margin:4px 0 0; line-height:1.8; }
 
+/* ─── Restaurant Screen ─────────────────────────────────────────── */
+.rest-card  { background:#fff; border-radius:var(--radius-lg); box-shadow:var(--shadow);
+              padding:14px 16px; margin-bottom:10px; display:flex; align-items:center;
+              gap:12px; cursor:pointer; transition:transform .15s;
+              -webkit-tap-highlight-color:transparent; }
+.rest-card:active { transform:scale(.98); }
+.rest-emoji { font-size:28px; flex-shrink:0; }
+.rest-info  { flex:1; min-width:0; }
+.rest-name  { font-size:15px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rest-meta  { font-size:12px; color:var(--muted); margin-top:2px; }
+.rest-dist  { margin-left:auto; font-size:12px; font-weight:700; color:var(--green-dark);
+              white-space:nowrap; padding-left:8px; }
+.dish-card  { background:#fff; border-radius:var(--radius-lg); box-shadow:var(--shadow);
+              padding:16px; margin-bottom:12px; }
+.dish-name  { font-size:16px; font-weight:800; margin-bottom:6px; }
+.dish-reason{ font-size:13px; color:var(--muted); margin-bottom:10px; line-height:1.5; }
+.dish-badges{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.dish-footer{ font-size:12px; color:var(--muted); margin-bottom:14px; }
+
 /* ─── Error Banner ──────────────────────────────────────────────── */
 .error-banner {
   display: none;
@@ -683,6 +702,10 @@ body {
           <button class="nav-btn" onclick="showScreen('screen-suggest')">
             <span class="nav-icon">💡</span>
             Meal Ideas
+          </button>
+          <button class="nav-btn" onclick="showScreen('screen-restaurant')">
+            <span class="nav-icon">🍽️</span>
+            Restaurants
           </button>
           <button class="nav-btn" onclick="showScreen('screen-history')">
             <span class="nav-icon">📅</span>
@@ -1059,6 +1082,30 @@ body {
 
   </div><!-- /screen-suggest -->
 
+  <!-- ─── Screen: Nearby Restaurants (Phase 4B) ──────────────────── -->
+  <div id="screen-restaurant" class="screen">
+
+    <div class="header">
+      <button class="header-back" onclick="restGoBack()">←</button>
+      <div>
+        <div class="header-title">🍽️ Nearby Restaurants</div>
+        <div class="header-sub" id="rest-header-sub">Find restaurants near you</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div id="rest-idle" class="card" style="text-align:center; padding:32px 20px;"></div>
+      <div id="rest-spinner" class="spinner-wrap" style="display:none; flex-direction:column;">
+        <div class="spinner"></div>
+        <div class="spinner-text" id="rest-spinner-text">Getting your location…</div>
+      </div>
+      <div id="rest-error" class="error-banner"></div>
+      <div id="rest-list"></div>
+      <div id="rest-dishes"></div>
+    </div>
+
+  </div><!-- /screen-restaurant -->
+
 </div><!-- /app -->
 
 <!-- ─── PIN Lock Screen ───────────────────────────────────────────── -->
@@ -1197,7 +1244,8 @@ function showScreen(id) {
   if (id === 'screen-meals')     refreshMeals();
   if (id === 'screen-nutrition') refreshNutrition();
   if (id === 'screen-history')   refreshHistory();
-  if (id === 'screen-suggest')   initSuggestScreen();
+  if (id === 'screen-suggest')    initSuggestScreen();
+  if (id === 'screen-restaurant') initRestaurantScreen();
 }
 
 // ─── Toast ───────────────────────────────────────────────────────
@@ -2064,6 +2112,250 @@ function prefillMealLog(ingredients) {
     if (match) makeFoodItem(match[1].trim(), parseInt(match[2]), 'manual-food-list');
     else        makeFoodItem(ing, 100, 'manual-food-list');
   });
+}
+
+// ─── Phase 4B: Restaurant Recommender ────────────────────────────
+
+let _restList = [];      // cached restaurant list for back-navigation
+let _restState = 'idle'; // 'idle' | 'list' | 'dishes'
+
+function initRestaurantScreen() {
+  // Only reset to idle if coming from home (not internal back-navigation)
+  if (_restState === 'idle') _renderRestIdle();
+}
+
+function _renderRestIdle() {
+  _restState = 'idle';
+  document.getElementById('rest-idle').style.display   = '';
+  document.getElementById('rest-spinner').style.display = 'none';
+  document.getElementById('rest-error').style.display   = 'none';
+  document.getElementById('rest-list').innerHTML         = '';
+  document.getElementById('rest-dishes').innerHTML       = '';
+  document.getElementById('rest-header-sub').textContent = 'Find restaurants near you';
+  document.getElementById('rest-idle').innerHTML = `
+    <div style="font-size:48px;margin-bottom:12px;">📍</div>
+    <div style="font-weight:800;font-size:17px;margin-bottom:8px;">Find Nearby Restaurants</div>
+    <div style="color:var(--muted);font-size:14px;margin-bottom:20px;line-height:1.6;">
+      We'll find restaurants within 1.5 km and suggest the healthiest dishes to order based on your nutrient gaps.
+    </div>
+    <button class="btn btn-primary" onclick="findRestaurants()">📍 Find Restaurants Near Me</button>`;
+}
+
+function restGoBack() {
+  if (_restState === 'dishes') {
+    // Back to restaurant list
+    _restState = 'list';
+    document.getElementById('rest-dishes').innerHTML = '';
+    document.getElementById('rest-error').style.display = 'none';
+    document.getElementById('rest-header-sub').textContent = _restList.length + ' restaurants found';
+    renderRestaurantList(_restList);
+  } else {
+    _restState = 'idle';
+    _restList  = [];
+    showScreen('screen-home');
+  }
+}
+
+function findRestaurants() {
+  if (!navigator.geolocation) {
+    _showRestError("Your browser doesn't support location access.");
+    return;
+  }
+  _showRestSpinner('Getting your location…');
+  navigator.geolocation.getCurrentPosition(
+    pos => _loadRestaurantsAt(pos.coords.latitude, pos.coords.longitude),
+    err => {
+      if (err.code === 1) // PERMISSION_DENIED
+        _showRestError('Location access was denied. Please allow location in your browser settings and try again.');
+      else
+        _showRestError('Could not get your location. Please try again.');
+    },
+    { timeout: 10000 }
+  );
+}
+
+async function _loadRestaurantsAt(lat, lon) {
+  try {
+    _showRestSpinner('Finding restaurants nearby…');
+    const list = await fetchNearbyRestaurants(lat, lon);
+    _restList = list;
+    if (list.length === 0) {
+      _showRestError('No restaurants found within 1.5 km. Try in a busier area.');
+      return;
+    }
+    _restState = 'list';
+    document.getElementById('rest-spinner').style.display = 'none';
+    document.getElementById('rest-idle').style.display    = 'none';
+    document.getElementById('rest-header-sub').textContent = list.length + ' restaurants found';
+    renderRestaurantList(list);
+  } catch (e) {
+    _showRestError('Could not load restaurants: ' + (e.message || 'Unknown error') + '. Try again.');
+  }
+}
+
+async function fetchNearbyRestaurants(lat, lon) {
+  const query = `[out:json][timeout:15];node["amenity"="restaurant"](around:1500,${lat},${lon});out 30;`;
+  const resp = await fetch('https://overpass-api.de/api/interpreter', {
+    method: 'POST',
+    body: 'data=' + encodeURIComponent(query)
+  });
+  if (!resp.ok) throw new Error('Overpass API error');
+  const data = await resp.json();
+  return (data.elements || [])
+    .filter(el => el.tags?.name)
+    .map(el => ({
+      id: el.id,
+      name: el.tags.name,
+      cuisine: el.tags.cuisine || '',
+      lat: el.lat,
+      lon: el.lon,
+      dist: haversine(lat, lon, el.lat, el.lon)
+    }))
+    .sort((a, b) => a.dist - b.dist)
+    .slice(0, 12);
+}
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 +
+            Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+}
+
+function formatDist(m) {
+  return m < 1000 ? m + ' m' : (m / 1000).toFixed(1) + ' km';
+}
+
+function formatCuisine(str) {
+  if (!str) return '';
+  return str.split(';').map(s => s.trim().replace(/_/g,' '))
+    .filter(Boolean).map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' · ');
+}
+
+function renderRestaurantList(list) {
+  const el = document.getElementById('rest-list');
+  el.innerHTML = list.map(r => {
+    const cuisine = formatCuisine(r.cuisine);
+    const cuisineHtml = cuisine ? `<div class="rest-meta">${esc(cuisine)}</div>` : '';
+    const emoji = _cuisineEmoji(r.cuisine);
+    const rData = JSON.stringify(r).replace(/"/g, '&quot;');
+    return `<div class="rest-card" onclick="selectRestaurant(${rData})">
+      <div class="rest-emoji">${emoji}</div>
+      <div class="rest-info">
+        <div class="rest-name">${esc(r.name)}</div>
+        ${cuisineHtml}
+      </div>
+      <div class="rest-dist">📍 ${formatDist(r.dist)}</div>
+    </div>`;
+  }).join('');
+}
+
+function _cuisineEmoji(cuisine) {
+  const c = (cuisine || '').toLowerCase();
+  if (c.includes('thai'))    return '🍜';
+  if (c.includes('sushi') || c.includes('japanese')) return '🍣';
+  if (c.includes('pizza') || c.includes('italian'))  return '🍕';
+  if (c.includes('burger') || c.includes('american')) return '🍔';
+  if (c.includes('chinese') || c.includes('dim_sum')) return '🥢';
+  if (c.includes('indian')) return '🍛';
+  if (c.includes('seafood')) return '🦐';
+  if (c.includes('steak') || c.includes('bbq') || c.includes('grill')) return '🥩';
+  if (c.includes('vegetarian') || c.includes('vegan')) return '🥗';
+  if (c.includes('noodle') || c.includes('ramen')) return '🍜';
+  return '🍽️';
+}
+
+async function selectRestaurant(r) {
+  const apiKey = getSetting(LS_GEMINI, '').trim();
+  if (!apiKey) {
+    document.getElementById('rest-error').style.display = 'block';
+    document.getElementById('rest-error').textContent   = '🔑 Add your Groq API key in Settings to get dish recommendations.';
+    return;
+  }
+  _restState = 'dishes';
+  document.getElementById('rest-list').innerHTML   = '';
+  document.getElementById('rest-error').style.display = 'none';
+  document.getElementById('rest-header-sub').textContent = r.name;
+  _showRestSpinner('Finding the best dishes for your gaps…');
+
+  try {
+    const { gaps } = buildSuggestContext();
+    const gapsLine = gaps.length
+      ? gaps.map(g => `${g.name} (${g.pct}% of daily need)`).join(', ')
+      : 'balanced — no major gaps';
+    const cuisineStr = formatCuisine(r.cuisine) || 'unknown';
+
+    const prompt = `You are a nutritionist helping someone order healthy food at a restaurant.
+
+Restaurant: "${r.name}"
+Cuisine type: "${cuisineStr}"
+The user's biggest nutrient gaps today: ${gapsLine}
+
+Suggest exactly 3 dishes they could order at this restaurant that would help address their nutrient gaps.
+Include a realistic estimated portion weight in grams for each dish.
+
+Return ONLY valid JSON with this exact structure:
+{"dishes":[{"name":"Grilled Salmon","emoji":"🐟","reason":"One sentence why this helps their specific gaps","helpsNutrients":["Vitamin D","Protein"],"estGrams":200,"tips":"Ask for extra vegetables on the side"}]}`;
+
+    const data  = await callGroqText(apiKey, prompt);
+    const raw   = data.choices?.[0]?.message?.content || '';
+    let dishes;
+    try {
+      dishes = JSON.parse(raw).dishes;
+    } catch {
+      const s = raw.indexOf('['), e = raw.lastIndexOf(']');
+      if (s !== -1 && e !== -1) dishes = JSON.parse(raw.slice(s, e + 1));
+    }
+    if (!Array.isArray(dishes) || dishes.length === 0) throw new Error('No recommendations returned — try another restaurant.');
+
+    document.getElementById('rest-spinner').style.display = 'none';
+    renderDishCards(dishes, r.name);
+  } catch (err) {
+    _showRestError('❌ ' + (err.message || 'Could not get recommendations. Try again.'));
+    // Allow going back to list
+    _restState = 'dishes';
+  }
+}
+
+function renderDishCards(dishes, restName) {
+  const el = document.getElementById('rest-dishes');
+  el.innerHTML = `<div class="card" style="padding:12px 16px;margin-bottom:4px;">
+      <div style="font-size:13px;font-weight:700;color:var(--muted);">Best dishes to order at ${esc(restName)}</div>
+    </div>` +
+    dishes.map(d => {
+      const badges  = (d.helpsNutrients || []).map(n => `<span class="suggest-badge">↑ ${n}</span>`).join('');
+      const ingData = JSON.stringify([d.name + ' ' + (d.estGrams || 150) + 'g']).replace(/"/g, '&quot;');
+      const tipHtml = d.tips ? `<div class="dish-footer">💡 ${esc(d.tips)}</div>` : '';
+      return `<div class="dish-card">
+        <div class="dish-name">${d.emoji || '🍽️'} ${esc(d.name)}</div>
+        <div class="dish-reason">${esc(d.reason || '')}</div>
+        <div class="dish-badges">${badges}</div>
+        <div class="dish-footer">~${d.estGrams || 150}g estimated portion</div>
+        ${tipHtml}
+        <button class="btn btn-secondary btn-full" onclick="prefillMealLog(${ingData})">➕ Pre-fill Log</button>
+      </div>`;
+    }).join('');
+}
+
+function _showRestSpinner(msg) {
+  document.getElementById('rest-idle').style.display    = 'none';
+  document.getElementById('rest-error').style.display   = 'none';
+  document.getElementById('rest-list').innerHTML         = '';
+  document.getElementById('rest-dishes').innerHTML       = '';
+  const sp = document.getElementById('rest-spinner');
+  sp.style.display = 'flex';
+  document.getElementById('rest-spinner-text').textContent = msg;
+}
+
+function _showRestError(msg) {
+  document.getElementById('rest-spinner').style.display = 'none';
+  document.getElementById('rest-idle').style.display    = 'none';
+  const errEl = document.getElementById('rest-error');
+  errEl.style.display = 'block';
+  errEl.innerHTML = `<div>${msg}</div>
+    <button class="btn btn-ghost" style="margin-top:10px;" onclick="_renderRestIdle()">← Try Again</button>`;
 }
 
 // ─── PIN Lock ─────────────────────────────────────────────────────
