@@ -746,6 +746,30 @@ body {
     </div>
   </div><!-- /screen-log -->
 
+  <!-- Food name autocomplete list (shared across all food inputs) -->
+  <datalist id="food-suggestions">
+    <option value="Apple"><option value="Avocado"><option value="Bacon">
+    <option value="Banana"><option value="Beef, ground"><option value="Black beans">
+    <option value="Blueberries"><option value="Bread, white"><option value="Bread, whole wheat">
+    <option value="Broccoli"><option value="Brown rice"><option value="Butter">
+    <option value="Carrot"><option value="Cashews"><option value="Cheddar cheese">
+    <option value="Chicken breast, grilled"><option value="Chicken thigh"><option value="Chocolate, dark">
+    <option value="Coffee, black"><option value="Corn"><option value="Cottage cheese">
+    <option value="Cucumber"><option value="Egg, boiled"><option value="Egg, scrambled">
+    <option value="Edamame"><option value="Granola"><option value="Greek yogurt">
+    <option value="Green beans"><option value="Hamburger"><option value="Kale">
+    <option value="Lentils"><option value="Mango"><option value="Milk, whole">
+    <option value="Milk, skim"><option value="Mushrooms"><option value="Oatmeal">
+    <option value="Olive oil"><option value="Orange"><option value="Orange juice">
+    <option value="Pasta, cooked"><option value="Peanut butter"><option value="Peas">
+    <option value="Pizza, cheese"><option value="Pork chop"><option value="Potato, baked">
+    <option value="Quinoa"><option value="Salmon, baked"><option value="Shrimp, cooked">
+    <option value="Spinach"><option value="Steak, sirloin"><option value="Strawberries">
+    <option value="Sweet potato"><option value="Tofu"><option value="Tomato">
+    <option value="Tuna, canned"><option value="Turkey breast"><option value="Walnuts">
+    <option value="White rice"><option value="Yogurt, plain"><option value="Zucchini">
+  </datalist>
+
 
   <!-- ════════════════════════════════════════════════
        SCREEN: TODAY'S MEALS (Phase 2 placeholder)
@@ -1483,6 +1507,40 @@ function populateFoodList(foods) {
   foods.forEach(item => addFoodRow(item.food, item.grams));
 }
 
+let _acTimer = null;
+function _setupFoodAC(input) {
+  input.setAttribute('list', 'food-suggestions');
+  input.setAttribute('autocomplete', 'off');
+  input.addEventListener('input', function() {
+    clearTimeout(_acTimer);
+    const q = this.value.trim();
+    if (q.length < 2) return;
+    const key = getSetting(LS_USDA, '');
+    if (!key) return;
+    _acTimer = setTimeout(async () => {
+      try {
+        const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(q)}&pageSize=10&api_key=${key}`;
+        const resp = await fetch(url);
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const dl = document.getElementById('food-suggestions');
+        // Keep static options (first 60) and append USDA results
+        while (dl.children.length > 60) dl.removeChild(dl.lastChild);
+        const seen = new Set([...dl.children].map(o => o.value.toLowerCase()));
+        (data.foods || []).forEach(f => {
+          const name = f.description;
+          if (!seen.has(name.toLowerCase())) {
+            const opt = document.createElement('option');
+            opt.value = name;
+            dl.appendChild(opt);
+            seen.add(name.toLowerCase());
+          }
+        });
+      } catch (_) { /* ignore autocomplete errors */ }
+    }, 350);
+  });
+}
+
 function makeFoodItem(food = '', grams = 100, listId = 'food-list') {
   const item = document.createElement('div');
   item.className = 'food-item';
@@ -1492,6 +1550,7 @@ function makeFoodItem(food = '', grams = 100, listId = 'food-list') {
     <span class="food-unit">g</span>
     <button class="food-del" onclick="this.parentElement.remove()" title="Remove">✕</button>`;
   document.getElementById(listId).appendChild(item);
+  _setupFoodAC(item.querySelector('.food-name-input'));
 }
 
 function addFoodRow(food = '', grams = 100) {
