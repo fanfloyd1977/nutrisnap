@@ -437,6 +437,23 @@ body {
 /* ─── Divider ───────────────────────────────────────────────────── */
 .divider { height: 1px; background: var(--border); margin: 4px 0; }
 
+/* ─── Meal Cards (Today's Meals screen) ─────────────────────────── */
+.meal-card { padding: 12px 0; }
+.meal-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
+.meal-time  { font-size:12px; color:var(--muted); }
+.meal-label { font-weight:700; font-size:15px; color:var(--text); }
+.meal-cals  { font-weight:800; color:var(--green); font-size:15px; }
+.btn-delete { background:none; border:none; font-size:16px; cursor:pointer; padding:2px 4px; }
+.food-tags  { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+.food-tag   { background:var(--light-green); color:var(--green); font-size:12px;
+              font-weight:600; padding:2px 8px; border-radius:20px; }
+.meal-macros { display:flex; gap:12px; margin-top:6px; font-size:12px; color:var(--muted); }
+.meal-macros span { font-weight:600; color:var(--text); }
+.day-total  { background:var(--light-green); border-radius:12px; padding:10px 14px;
+              display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+.day-total-label { font-size:13px; color:var(--muted); font-weight:600; }
+.day-total-val   { font-size:18px; font-weight:800; color:var(--green); }
+
 /* ─── PIN Lock Screen ───────────────────────────────────────────── */
 #lock-screen {
   position: fixed;
@@ -639,7 +656,7 @@ body {
       <!-- Spinner -->
       <div class="spinner-wrap" id="spinner">
         <div class="spinner"></div>
-        <div class="spinner-text">Gemini is identifying your food... 🤔</div>
+        <div class="spinner-text">Identifying your food... 🤔</div>
       </div>
 
       <!-- Error banner -->
@@ -1020,30 +1037,78 @@ function refreshHome() {
   document.getElementById('key-warning').style.display = key ? 'none' : 'block';
 }
 
-// ─── Today's Meals (placeholder, Phase 2 will fill this) ─────────
+// ─── Today's Meals ────────────────────────────────────────────────
 
 function refreshMeals() {
   document.getElementById('meals-date').textContent = fmtDate(new Date());
   const meals = todayMeals();
-  const placeholder = document.querySelector('#screen-meals .card');
+  const placeholder = document.querySelector('#screen-meals > .content > .card');
   const mealList = document.getElementById('meal-list');
 
   if (meals.length === 0) {
     if (placeholder) placeholder.style.display = '';
     mealList.style.display = 'none';
-  } else {
-    if (placeholder) placeholder.style.display = 'none';
-    mealList.style.display = '';
-    mealList.innerHTML = `<div class="card-title">${meals.length} meal${meals.length > 1 ? 's' : ''} today</div>`;
-    meals.forEach((m, i) => {
-      const cals = Math.round(m.nutrients?.calories || 0);
-      mealList.innerHTML += `
-        <div class="info-row">
-          <span class="label">${m.time || ''} — ${m.label || 'Meal ' + (i+1)}</span>
-          <span class="val">${cals} kcal</span>
-        </div>`;
-    });
+    return;
   }
+
+  if (placeholder) placeholder.style.display = 'none';
+  mealList.style.display = '';
+
+  const totalCals    = Math.round(meals.reduce((s, m) => s + (m.nutrients?.calories || 0), 0));
+  const totalProtein = Math.round(meals.reduce((s, m) => s + (m.nutrients?.protein  || 0), 0));
+  const totalCarbs   = Math.round(meals.reduce((s, m) => s + (m.nutrients?.carbs    || 0), 0));
+  const totalFat     = Math.round(meals.reduce((s, m) => s + (m.nutrients?.fat      || 0), 0));
+
+  let html = `
+    <div class="card-title">Today — ${meals.length} meal${meals.length > 1 ? 's' : ''}</div>
+    <div class="day-total">
+      <span class="day-total-label">Total Calories</span>
+      <span class="day-total-val">${totalCals.toLocaleString()} kcal</span>
+    </div>
+    <div class="meal-macros" style="margin-bottom:12px;">
+      Protein: <span>${totalProtein}g</span> &nbsp;
+      Carbs: <span>${totalCarbs}g</span> &nbsp;
+      Fat: <span>${totalFat}g</span>
+    </div>`;
+
+  meals.forEach((m, i) => {
+    const cals    = Math.round(m.nutrients?.calories || 0);
+    const protein = Math.round(m.nutrients?.protein  || 0);
+    const carbs   = Math.round(m.nutrients?.carbs    || 0);
+    const fat     = Math.round(m.nutrients?.fat      || 0);
+    html += `
+      ${i > 0 ? '<div class="divider"></div>' : ''}
+      <div class="meal-card">
+        <div class="meal-header">
+          <div>
+            <div class="meal-time">${m.time}</div>
+            <div class="meal-label">Meal ${i + 1}</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="meal-cals">${cals} kcal</span>
+            <button class="btn-delete" onclick="deleteMeal(${m.id})" title="Delete meal">🗑️</button>
+          </div>
+        </div>
+        <div class="food-tags">
+          ${m.foods.map(f => `<span class="food-tag">${f.food} ${f.grams}g</span>`).join('')}
+        </div>
+        <div class="meal-macros">
+          Protein: <span>${protein}g</span> &nbsp;
+          Carbs: <span>${carbs}g</span> &nbsp;
+          Fat: <span>${fat}g</span>
+        </div>
+      </div>`;
+  });
+
+  mealList.innerHTML = html;
+}
+
+function deleteMeal(id) {
+  if (!confirm('Remove this meal from today\'s log?')) return;
+  const meals = getMeals().filter(m => m.id !== id);
+  localStorage.setItem(LS_MEALS, JSON.stringify(meals));
+  refreshMeals();
+  showToast('Meal removed', 'error');
 }
 
 // ─── Settings ────────────────────────────────────────────────────
@@ -1291,29 +1356,67 @@ function esc(s) {
     .replace(/"/g,'&quot;');
 }
 
+// ─── USDA Nutrition Lookup ────────────────────────────────────────
+
+async function lookupNutrition(foodName, grams, usdaKey) {
+  try {
+    const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(foodName)}&pageSize=3&api_key=${usdaKey}`;
+    const resp = await fetch(url);
+    if (!resp.ok) return {};
+    const data = await resp.json();
+    const food = data.foods?.[0];
+    if (!food) return {};
+
+    // Build nutrientId → value map (values are per 100g)
+    const byId = {};
+    (food.foodNutrients || []).forEach(n => { byId[n.nutrientId] = n.value || 0; });
+
+    // Map to our DRV keys, scaled by portion grams
+    const scale = grams / 100;
+    const result = {};
+    for (const [key, drv] of Object.entries(DRV)) {
+      result[key] = (byId[drv.id] || 0) * scale;
+    }
+    return result;
+  } catch {
+    return {};
+  }
+}
+
 // ─── Add Meal to Log ──────────────────────────────────────────────
 
-function addMealToLog() {
-  // Collect foods from both lists
+async function addMealToLog() {
   const foods = collectFoods('food-list').concat(collectFoods('manual-food-list'));
   if (foods.length === 0) {
     showToast('⚠️ No foods to log!', 'error');
     return;
   }
 
-  // Build meal object (nutrients will be populated in Phase 2 via USDA)
+  const btn = document.getElementById('btn-add-log');
+  btn.disabled = true;
+  btn.textContent = '⏳ Looking up nutrition...';
+
+  const usdaKey = getSetting(LS_USDA, '').trim();
+  const foodsWithNutrients = [];
+  const totalNutrients = {};
+
+  for (const f of foods) {
+    const nutrients = usdaKey ? await lookupNutrition(f.food, f.grams, usdaKey) : {};
+    foodsWithNutrients.push({ ...f, nutrients });
+    for (const [k, v] of Object.entries(nutrients)) {
+      totalNutrients[k] = (totalNutrients[k] || 0) + v;
+    }
+  }
+
   const now  = new Date();
   const meal = {
     id:        Date.now(),
     date:      todayISO(),
     time:      now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-    label:     foods.map(f => f.food).join(', ').slice(0, 40),
-    foods:     foods,
-    nutrients: {},      // Phase 2 will populate this via USDA lookup
-    photoData: currentPhotoBase64 ? currentPhotoBase64.slice(0, 200) : null, // tiny ref only
+    foods:     foodsWithNutrients,
+    nutrients: totalNutrients,
   };
 
-  // Save to localStorage
   const meals = getMeals();
   meals.push(meal);
   localStorage.setItem(LS_MEALS, JSON.stringify(meals));
