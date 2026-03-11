@@ -116,6 +116,47 @@ body {
 .header-title { font-size: 20px; font-weight: 800; flex: 1; }
 .header-sub   { font-size: 13px; opacity: .85; margin-top: 1px; }
 
+/* ─── Meals Screen Hero ─────────────────────────────────────────── */
+.meals-hero {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  height: 260px;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+}
+.meals-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(175deg, rgba(45,30,110,.65) 0%, rgba(45,30,110,.28) 55%, transparent 100%);
+}
+.meals-hero-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 52px 20px 18px;
+  color: #fff;
+}
+.meals-content-wrap {
+  position: relative;
+  z-index: 1;
+  margin-top: 230px;
+  border-radius: 22px 22px 0 0;
+  background: var(--bg);
+  min-height: calc(100vh - 230px);
+  padding: 16px 16px 84px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 /* ─── Content Area ──────────────────────────────────────────────── */
 .content {
   padding: 16px;
@@ -995,16 +1036,20 @@ body {
   ═══════════════════════════════════════════════════ -->
   <div id="screen-meals" class="screen">
 
-    <div class="header">
-      <button class="header-back" onclick="showScreen('screen-home')">←</button>
-      <div>
-        <div class="header-title">Today's Meals</div>
-        <div class="header-sub" id="meals-date"></div>
+    <!-- Fixed hero background image — set randomly by _setMealsHero() -->
+    <div class="meals-hero" id="meals-hero">
+      <div class="meals-hero-header">
+        <button class="header-back" onclick="showScreen('screen-home')">←</button>
+        <div>
+          <div class="header-title">Today's Meals</div>
+          <div class="header-sub" id="meals-date"></div>
+        </div>
       </div>
     </div>
 
-    <div class="content">
-      <div class="card" style="text-align:center; padding: 40px 20px;">
+    <!-- Content slides up over the fixed hero when scrolling -->
+    <div class="meals-content-wrap">
+      <div id="meals-empty-card" class="card" style="text-align:center; padding: 40px 20px;">
         <div style="font-size:48px; margin-bottom:12px;">🍽️</div>
         <div style="font-weight:800; font-size:17px; margin-bottom:8px;">No meals logged yet</div>
         <div style="color:var(--muted); font-size:14px; margin-bottom:20px;">
@@ -1013,10 +1058,9 @@ body {
         <button class="btn btn-primary" onclick="showScreen('screen-log')">📷 Log a Meal</button>
       </div>
 
-      <div id="meal-list" class="card" style="display:none;">
-        <!-- Populated in Phase 2 -->
-      </div>
+      <div id="meal-list" class="card" style="display:none;"></div>
     </div>
+
   </div><!-- /screen-meals -->
 
 
@@ -1521,10 +1565,28 @@ function refreshHome() {
 
 // ─── Today's Meals ────────────────────────────────────────────────
 
+const BG_IMAGES = [
+  'BACKGROUND/S__44302389.jpg','BACKGROUND/S__44302394.jpg',
+  'BACKGROUND/S__44302399.jpg','BACKGROUND/S__44302400.jpg',
+  'BACKGROUND/S__44302401.jpg','BACKGROUND/S__44302402.jpg',
+  'BACKGROUND/S__44302403.jpg','BACKGROUND/S__44302404.jpg',
+  'BACKGROUND/S__44302406.jpg','BACKGROUND/S__44302408.jpg',
+  'BACKGROUND/S__44302409.jpg','BACKGROUND/S__44302410.jpg',
+  'BACKGROUND/S__44302412.jpg','BACKGROUND/S__44302413.jpg',
+];
+
+function _setMealsHero() {
+  const hero = document.getElementById('meals-hero');
+  if (!hero) return;
+  const img = BG_IMAGES[Math.floor(Math.random() * BG_IMAGES.length)];
+  hero.style.backgroundImage = `url('${img}')`;
+}
+
 function refreshMeals() {
+  _setMealsHero();
   document.getElementById('meals-date').textContent = fmtDate(new Date());
   const meals = todayMeals();
-  const placeholder = document.querySelector('#screen-meals > .content > .card');
+  const placeholder = document.getElementById('meals-empty-card');
   const mealList = document.getElementById('meal-list');
 
   if (meals.length === 0) {
