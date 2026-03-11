@@ -1901,11 +1901,13 @@ function _foodEmoji(name) {
   return '🥘';
 }
 
-// ─── Food Photo Lookup (TheMealDB → Unsplash fallback) ────────────
+// ─── Food Photo Lookup (TheMealDB name → TheMealDB ingredient → LoremFlickr) ──
 
 async function _fetchFoodPhoto(foodName) {
-  const words = foodName.toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/).filter(w => w.length > 3);
-  const queries = [foodName, words[0], words[1]].filter(Boolean);
+  const words = foodName.toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/).filter(w => w.length >= 3);
+  const queries = [...new Set([foodName, words[0], words[1]].filter(Boolean))];
+
+  // 1. TheMealDB: search by meal name
   for (const q of queries) {
     try {
       const r = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(q)}`);
@@ -1913,22 +1915,31 @@ async function _fetchFoodPhoto(foodName) {
       if (d.meals?.[0]?.strMealThumb) return d.meals[0].strMealThumb + '/preview';
     } catch { /* try next */ }
   }
-  // Unsplash fallback
-  const kw = encodeURIComponent((words[0] || foodName) + ',food');
-  return `https://source.unsplash.com/200x200/?${kw}`;
+
+  // 2. TheMealDB: filter by main ingredient keyword (much wider coverage)
+  if (words[0]) {
+    try {
+      const r = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(words[0])}`);
+      const d = await r.json();
+      if (d.meals?.[0]?.strMealThumb) return d.meals[0].strMealThumb + '/preview';
+    } catch { /* fallback */ }
+  }
+
+  // 3. LoremFlickr — free, no key, real food photos from Flickr
+  const kw = words.slice(0, 2).join(',') || 'food';
+  return `https://loremflickr.com/200/200/food,${encodeURIComponent(kw)}`;
 }
 
 function _loadFoodPhotos(containerEl) {
   containerEl.querySelectorAll('img.food-card-photo[data-food]').forEach(async img => {
     const url = await _fetchFoodPhoto(img.dataset.food);
-    const probe = new Image();
-    probe.onload = () => { img.src = url; img.classList.add('loaded'); };
-    probe.onerror = () => {
+    img.src = url;
+    img.onload  = () => img.classList.add('loaded');
+    img.onerror = () => {
       img.style.display = 'none';
       const fb = img.nextElementSibling;
-      if (fb) fb.style.display = 'flex';
+      if (fb?.classList.contains('food-card-fallback')) fb.style.display = 'flex';
     };
-    probe.src = url;
   });
 }
 
