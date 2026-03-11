@@ -444,8 +444,12 @@ body {
   border-radius: var(--radius-md);
   object-fit: cover;
   flex-shrink: 0;
-  background: var(--purple-light);
+  background: linear-gradient(90deg, #ede9fb 25%, #f5f3ff 50%, #ede9fb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
 }
+.food-card-photo.loaded { animation: none; background: var(--purple-light); }
+@keyframes shimmer { to { background-position: -200% 0; } }
 .food-card-fallback {
   width: 88px;
   height: 88px;
@@ -1897,6 +1901,37 @@ function _foodEmoji(name) {
   return '🥘';
 }
 
+// ─── Food Photo Lookup (TheMealDB → Unsplash fallback) ────────────
+
+async function _fetchFoodPhoto(foodName) {
+  const words = foodName.toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/).filter(w => w.length > 3);
+  const queries = [foodName, words[0], words[1]].filter(Boolean);
+  for (const q of queries) {
+    try {
+      const r = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(q)}`);
+      const d = await r.json();
+      if (d.meals?.[0]?.strMealThumb) return d.meals[0].strMealThumb + '/preview';
+    } catch { /* try next */ }
+  }
+  // Unsplash fallback
+  const kw = encodeURIComponent((words[0] || foodName) + ',food');
+  return `https://source.unsplash.com/200x200/?${kw}`;
+}
+
+function _loadFoodPhotos(containerEl) {
+  containerEl.querySelectorAll('img.food-card-photo[data-food]').forEach(async img => {
+    const url = await _fetchFoodPhoto(img.dataset.food);
+    const probe = new Image();
+    probe.onload = () => { img.src = url; img.classList.add('loaded'); };
+    probe.onerror = () => {
+      img.style.display = 'none';
+      const fb = img.nextElementSibling;
+      if (fb) fb.style.display = 'flex';
+    };
+    probe.src = url;
+  });
+}
+
 function makeFoodItem(food = '', grams = 100, listId = 'food-list') {
   const item = document.createElement('div');
   item.className = 'food-item';
@@ -2298,15 +2333,13 @@ Return a JSON object with this exact structure (no other text):
     if (!Array.isArray(meals) || meals.length === 0) throw new Error('No suggestions returned — try again');
 
     cards.innerHTML = meals.map((m, i) => {
-      const query   = encodeURIComponent(((m.imageQuery || m.name) + ',food').replace(/\s+/g, ','));
-      const imgUrl  = `https://source.unsplash.com/200x200/?${query}`;
       const emoji   = m.emoji || '🍽️';
       const badges  = (m.helpsNutrients || []).map(n => `<span class="food-card-badge">↑ ${n}</span>`).join('');
       const ingList = (m.ingredients || []).map(ing => `<li>${ing}</li>`).join('');
       const ingData = JSON.stringify(m.ingredients || []).replace(/"/g, '&quot;');
       return `
         <div class="food-card-h">
-          <img class="food-card-photo" src="${imgUrl}" loading="lazy" alt="${esc(m.name)}"
+          <img class="food-card-photo" src="" data-food="${esc(m.imageQuery || m.name)}" alt="${esc(m.name)}"
                onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
           <div class="food-card-fallback">${emoji}</div>
           <div class="food-card-body">
@@ -2321,6 +2354,7 @@ Return a JSON object with this exact structure (no other text):
           </div>
         </div>`;
     }).join('');
+    _loadFoodPhotos(cards);
 
     // Replace intro with refresh button
     intro.style.display = '';
@@ -2560,14 +2594,12 @@ function renderDishCards(dishes, restName) {
       <div style="font-size:13px;font-weight:700;color:var(--muted);">Best dishes to order at ${esc(restName)}</div>
     </div>` +
     dishes.map(d => {
-      const query   = encodeURIComponent((d.name + ',food').replace(/\s+/g, ','));
-      const imgUrl  = `https://source.unsplash.com/200x200/?${query}`;
       const emoji   = d.emoji || '🍽️';
       const badges  = (d.helpsNutrients || []).map(n => `<span class="food-card-badge">↑ ${n}</span>`).join('');
       const ingData = JSON.stringify([d.name + ' ' + (d.estGrams || 150) + 'g']).replace(/"/g, '&quot;');
       const meta    = `~${d.estGrams || 150}g estimated portion${d.tips ? ' · 💡 ' + esc(d.tips) : ''}`;
       return `<div class="food-card-h">
-        <img class="food-card-photo" src="${imgUrl}" loading="lazy" alt="${esc(d.name)}"
+        <img class="food-card-photo" src="" data-food="${esc(d.name)}" alt="${esc(d.name)}"
              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
         <div class="food-card-fallback">${emoji}</div>
         <div class="food-card-body">
@@ -2579,6 +2611,7 @@ function renderDishCards(dishes, restName) {
         </div>
       </div>`;
     }).join('');
+  _loadFoodPhotos(el);
 }
 
 function _showRestSpinner(msg) {
