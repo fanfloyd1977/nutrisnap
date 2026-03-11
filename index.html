@@ -1288,15 +1288,19 @@ body {
   <!-- ─── Screen: Nearby Restaurants (Phase 4B) ──────────────────── -->
   <div id="screen-restaurant" class="screen">
 
-    <div class="header">
-      <button class="header-back" onclick="restGoBack()">←</button>
-      <div>
-        <div class="header-title">🍽️ Nearby Restaurants</div>
-        <div class="header-sub" id="rest-header-sub">Find restaurants near you</div>
+    <!-- Fixed hero background — Restaurant.jpg -->
+    <div class="meals-hero" style="background-image:url('BACKGROUND/Restaurant.jpg');">
+      <div class="meals-hero-header">
+        <button class="header-back" onclick="restGoBack()">←</button>
+        <div>
+          <div class="header-title">🍽️ Nearby Restaurants</div>
+          <div class="header-sub" id="rest-header-sub">Find restaurants near you</div>
+        </div>
       </div>
     </div>
 
-    <div class="content">
+    <!-- Content slides up over hero -->
+    <div class="meals-content-wrap">
       <div id="rest-idle" class="card" style="text-align:center; padding:32px 20px;"></div>
       <div id="rest-spinner" class="spinner-wrap" style="display:none; flex-direction:column;">
         <div class="spinner"></div>
@@ -1566,6 +1570,15 @@ function refreshHome() {
 // ─── Today's Meals ────────────────────────────────────────────────
 
 const BG_IMAGES = [
+  'BACKGROUND/1.jpg',
+  'BACKGROUND/2.jpg',
+  'BACKGROUND/4.jpg',
+  'BACKGROUND/5.jpg',
+  'BACKGROUND/6.jpg',
+  'BACKGROUND/7.jpg',
+  'BACKGROUND/8.jpg',
+  'BACKGROUND/9.jpg',
+  'BACKGROUND/Restaurant.jpg',
   'BACKGROUND/S__44302389.jpg',
   'BACKGROUND/S__44302394.jpg',
   'BACKGROUND/S__44302399.jpg',
@@ -1573,13 +1586,10 @@ const BG_IMAGES = [
   'BACKGROUND/S__44302401.jpg',
   'BACKGROUND/S__44302402.jpg',
   'BACKGROUND/S__44302403.jpg',
-  'BACKGROUND/S__44302404.jpg',
   'BACKGROUND/S__44302406.jpg',
-  'BACKGROUND/S__44302408.jpg',
   'BACKGROUND/S__44302409.jpg',
   'BACKGROUND/S__44302410.jpg',
   'BACKGROUND/S__44302412.jpg',
-  'BACKGROUND/S__44302413.jpg',
 ];
 
 function _setMealsHero() {
