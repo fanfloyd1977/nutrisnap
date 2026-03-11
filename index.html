@@ -427,6 +427,44 @@ body {
 .dish-badges{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
 .dish-footer{ font-size:12px; color:var(--muted); margin-bottom:14px; }
 
+/* ─── Horizontal Food Cards (Meal Ideas & Restaurant Dishes) ────── */
+.food-card-h {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.food-card-photo {
+  width: 88px;
+  height: 88px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--purple-light);
+}
+.food-card-fallback {
+  width: 88px;
+  height: 88px;
+  border-radius: var(--radius-md);
+  background: var(--purple-light);
+  flex-shrink: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+}
+.food-card-body { flex: 1; min-width: 0; }
+.food-card-name { font-size: 15px; font-weight: 800; margin-bottom: 3px; }
+.food-card-desc { font-size: 12px; color: var(--muted); line-height: 1.4; margin-bottom: 6px; }
+.food-card-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.food-card-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+                   background: var(--purple-light); color: var(--purple-dark); }
+.food-card-meta { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+
 /* ─── Error Banner ──────────────────────────────────────────────── */
 .error-banner {
   display: none;
@@ -2260,22 +2298,26 @@ Return a JSON object with this exact structure (no other text):
     if (!Array.isArray(meals) || meals.length === 0) throw new Error('No suggestions returned — try again');
 
     cards.innerHTML = meals.map((m, i) => {
-      const imgUrl  = `https://source.unsplash.com/400x200/?${encodeURIComponent(m.imageQuery || m.name + ' food')}`;
-      const badges  = (m.helpsNutrients || []).map(n => `<span class="suggest-badge">↑ ${n}</span>`).join('');
+      const query   = encodeURIComponent(((m.imageQuery || m.name) + ',food').replace(/\s+/g, ','));
+      const imgUrl  = `https://source.unsplash.com/200x200/?${query}`;
+      const emoji   = m.emoji || '🍽️';
+      const badges  = (m.helpsNutrients || []).map(n => `<span class="food-card-badge">↑ ${n}</span>`).join('');
       const ingList = (m.ingredients || []).map(ing => `<li>${ing}</li>`).join('');
       const ingData = JSON.stringify(m.ingredients || []).replace(/"/g, '&quot;');
       return `
-        <div class="suggest-card">
-          <img class="suggest-photo" src="${imgUrl}" loading="lazy" alt="${esc(m.name)}" onerror="this.style.display='none'">
-          <div class="suggest-body">
-            <div class="suggest-name">${m.emoji || '🍽️'} ${esc(m.name)}</div>
-            <div class="suggest-desc">${esc(m.description || '')}</div>
-            <div class="suggest-badges">${badges}</div>
+        <div class="food-card-h">
+          <img class="food-card-photo" src="${imgUrl}" loading="lazy" alt="${esc(m.name)}"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="food-card-fallback">${emoji}</div>
+          <div class="food-card-body">
+            <div class="food-card-name">${emoji} ${esc(m.name)}</div>
+            <div class="food-card-desc">${esc(m.description || '')}</div>
+            <div class="food-card-badges">${badges}</div>
             <details>
-              <summary>🧂 Ingredients</summary>
+              <summary style="font-size:12px;font-weight:700;cursor:pointer;color:var(--purple-dark);margin-bottom:4px;">🧂 Ingredients</summary>
               <ul class="suggest-ing-list">${ingList}</ul>
             </details>
-            <button class="btn btn-secondary btn-full" onclick="prefillMealLog(${ingData})">➕ Pre-fill Log</button>
+            <button class="btn btn-secondary btn-full" style="margin-top:8px;" onclick="prefillMealLog(${ingData})">➕ Pre-fill Log</button>
           </div>
         </div>`;
     }).join('');
@@ -2514,20 +2556,27 @@ Return ONLY valid JSON with this exact structure:
 
 function renderDishCards(dishes, restName) {
   const el = document.getElementById('rest-dishes');
-  el.innerHTML = `<div class="card" style="padding:12px 16px;margin-bottom:4px;">
+  el.innerHTML = `<div class="card" style="padding:12px 16px;margin-bottom:8px;">
       <div style="font-size:13px;font-weight:700;color:var(--muted);">Best dishes to order at ${esc(restName)}</div>
     </div>` +
     dishes.map(d => {
-      const badges  = (d.helpsNutrients || []).map(n => `<span class="suggest-badge">↑ ${n}</span>`).join('');
+      const query   = encodeURIComponent((d.name + ',food').replace(/\s+/g, ','));
+      const imgUrl  = `https://source.unsplash.com/200x200/?${query}`;
+      const emoji   = d.emoji || '🍽️';
+      const badges  = (d.helpsNutrients || []).map(n => `<span class="food-card-badge">↑ ${n}</span>`).join('');
       const ingData = JSON.stringify([d.name + ' ' + (d.estGrams || 150) + 'g']).replace(/"/g, '&quot;');
-      const tipHtml = d.tips ? `<div class="dish-footer">💡 ${esc(d.tips)}</div>` : '';
-      return `<div class="dish-card">
-        <div class="dish-name">${d.emoji || '🍽️'} ${esc(d.name)}</div>
-        <div class="dish-reason">${esc(d.reason || '')}</div>
-        <div class="dish-badges">${badges}</div>
-        <div class="dish-footer">~${d.estGrams || 150}g estimated portion</div>
-        ${tipHtml}
-        <button class="btn btn-secondary btn-full" onclick="prefillMealLog(${ingData})">➕ Pre-fill Log</button>
+      const meta    = `~${d.estGrams || 150}g estimated portion${d.tips ? ' · 💡 ' + esc(d.tips) : ''}`;
+      return `<div class="food-card-h">
+        <img class="food-card-photo" src="${imgUrl}" loading="lazy" alt="${esc(d.name)}"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="food-card-fallback">${emoji}</div>
+        <div class="food-card-body">
+          <div class="food-card-name">${emoji} ${esc(d.name)}</div>
+          <div class="food-card-desc">${esc(d.reason || '')}</div>
+          <div class="food-card-badges">${badges}</div>
+          <div class="food-card-meta">${meta}</div>
+          <button class="btn btn-secondary btn-full" onclick="prefillMealLog(${ingData})">➕ Pre-fill Log</button>
+        </div>
       </div>`;
     }).join('');
 }
