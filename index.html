@@ -14,24 +14,30 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --green:      #4CAF50;
-  --green-light:#f0f7f0;
-  --green-dark: #388E3C;
-  --orange:     #FF8C42;
-  --red:        #F44336;
-  --yellow:     #FFC107;
-  --gold:       #FFD700;
-  --bg:         #f5f7f5;
-  --card:       #ffffff;
-  --text:       #2d3748;
-  --muted:      #718096;
-  --border:     #e2e8f0;
-  --radius-lg:  16px;
-  --radius-md:  12px;
-  --radius-sm:  8px;
-  --shadow:     0 2px 12px rgba(0,0,0,.08);
-  --shadow-lg:  0 4px 24px rgba(0,0,0,.12);
-  --font:       'Nunito', sans-serif;
+  --purple:       #7B6FF0;
+  --purple-light: #f0effe;
+  --purple-dark:  #5a50d0;
+  --pink:         #FF6B8A;
+  --pink-light:   #fff0f3;
+  --light-green:  #f0effe;  /* alias — fixes JS template literal references */
+  --green:        #7B6FF0;  /* legacy alias so any missed var(--green) still renders purple */
+  --green-light:  #f0effe;
+  --green-dark:   #5a50d0;
+  --orange:       #FF6B8A;
+  --red:          #F44336;
+  --yellow:       #FFC107;
+  --gold:         #FFD700;
+  --bg:           #f8f7ff;
+  --card:         #ffffff;
+  --text:         #2d2d3a;
+  --muted:        #8888a8;
+  --border:       #e8e6f4;
+  --radius-lg:    16px;
+  --radius-md:    12px;
+  --radius-sm:    8px;
+  --shadow:       0 4px 20px rgba(123,111,240,0.08);
+  --shadow-lg:    0 8px 32px rgba(123,111,240,0.14);
+  --font:         'Nunito', sans-serif;
 }
 
 html, body {
@@ -67,7 +73,7 @@ body {
   display: none;
   min-height: 100vh;
   flex-direction: column;
-  padding: 0 0 80px 0;
+  padding: 0 0 84px 0;
   animation: fadeSlideIn .22s ease;
 }
 .screen.active { display: flex; }
@@ -79,7 +85,7 @@ body {
 
 /* ─── Header Bar ────────────────────────────────────────────────── */
 .header {
-  background: var(--green);
+  background: linear-gradient(135deg, var(--purple) 0%, #9d94f5 100%);
   color: #fff;
   padding: 52px 20px 18px;
   display: flex;
@@ -88,7 +94,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 10;
-  box-shadow: 0 2px 8px rgba(76,175,80,.3);
+  box-shadow: 0 2px 12px rgba(123,111,240,.25);
 }
 .header-back {
   background: rgba(255,255,255,.22);
@@ -154,11 +160,11 @@ body {
   text-decoration: none;
 }
 .btn:active { transform: scale(.97); }
-.btn-primary   { background: var(--green); color: #fff; box-shadow: 0 2px 8px rgba(76,175,80,.35); }
-.btn-primary:active { box-shadow: 0 1px 4px rgba(76,175,80,.35); }
-.btn-secondary { background: var(--green-light); color: var(--green-dark); }
-.btn-orange    { background: var(--orange); color: #fff; box-shadow: 0 2px 8px rgba(255,140,66,.3); }
-.btn-outline   { background: transparent; color: var(--green-dark); border: 2px solid var(--green); }
+.btn-primary   { background: var(--purple); color: #fff; box-shadow: 0 2px 8px rgba(123,111,240,.35); }
+.btn-primary:active { box-shadow: 0 1px 4px rgba(123,111,240,.35); }
+.btn-secondary { background: var(--purple-light); color: var(--purple-dark); }
+.btn-orange    { background: var(--pink); color: #fff; box-shadow: 0 2px 8px rgba(255,107,138,.3); }
+.btn-outline   { background: transparent; color: var(--purple-dark); border: 2px solid var(--purple); }
 .btn-danger    { background: #fff0f0; color: var(--red); border: 1px solid #fcc; }
 .btn-ghost     { background: transparent; color: var(--muted); padding: 6px 12px; font-size: 13px; }
 .btn:disabled  { opacity: .45; pointer-events: none; }
@@ -186,7 +192,7 @@ body {
   transition: border-color .15s;
   outline: none;
 }
-.form-input:focus { border-color: var(--green); background: #fff; }
+.form-input:focus { border-color: var(--purple); background: #fff; }
 .input-wrap { position: relative; }
 .input-eye {
   position: absolute;
@@ -229,7 +235,7 @@ body {
 .calorie-consumed {
   font-size: 44px;
   font-weight: 900;
-  color: var(--green);
+  color: var(--pink);
   line-height: 1;
 }
 .calorie-sep   { font-size: 22px; color: var(--muted); }
@@ -250,7 +256,7 @@ body {
 /* ─── Nav Buttons (home screen) ─────────────────────────────────── */
 .nav-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 10px;
 }
 .nav-btn {
@@ -272,9 +278,9 @@ body {
   -webkit-tap-highlight-color: transparent;
   box-shadow: var(--shadow);
 }
-.nav-btn:active    { transform: scale(.97); background: var(--green-light); border-color: var(--green); }
-.nav-btn.primary   { background: var(--green); color: #fff; border-color: var(--green); box-shadow: 0 3px 12px rgba(76,175,80,.35); grid-column: 1 / -1; min-height: 68px; flex-direction: row; font-size: 16px; }
-.nav-btn.primary:active { background: var(--green-dark); }
+.nav-btn:active    { transform: scale(.97); background: var(--purple-light); border-color: var(--purple); }
+.nav-btn.primary   { background: var(--purple); color: #fff; border-color: var(--purple); box-shadow: 0 3px 12px rgba(123,111,240,.35); grid-column: 1 / -1; min-height: 68px; flex-direction: row; font-size: 16px; }
+.nav-btn.primary:active { background: var(--purple-dark); }
 .nav-btn .nav-icon { font-size: 26px; }
 .nav-btn.primary .nav-icon { font-size: 28px; }
 
@@ -291,21 +297,12 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 .upload-zone:hover,
-.upload-zone.has-photo { border-color: var(--green); background: var(--green-light); }
+.upload-zone.has-photo { border-color: var(--purple); background: var(--purple-light); }
 .upload-icon  { font-size: 52px; margin-bottom: 10px; }
 .upload-text  { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
 .upload-hint  { font-size: 13px; color: var(--muted); }
 #file-input   { position: absolute; width: 0; height: 0; opacity: 0; overflow: hidden; }
 
-/* ─── Photo Preview ─────────────────────────────────────────────── */
-#photo-preview {
-  width: 100%;
-  max-height: 260px;
-  object-fit: cover;
-  border-radius: var(--radius-md);
-  display: none;
-  box-shadow: var(--shadow);
-}
 
 /* ─── Loading Spinner ───────────────────────────────────────────── */
 .spinner-wrap {
@@ -319,7 +316,7 @@ body {
   width: 44px;
   height: 44px;
   border: 4px solid var(--border);
-  border-top-color: var(--green);
+  border-top-color: var(--purple);
   border-radius: 50%;
   animation: spin .8s linear infinite;
 }
@@ -327,26 +324,37 @@ body {
 .spinner-text { font-size: 14px; color: var(--muted); font-weight: 600; }
 
 /* ─── Food List (results) ───────────────────────────────────────── */
-#results-section { display: none; }
 .portion-row { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
 .portion-btn {
   flex:1; min-width:54px; padding:6px 4px; font-size:12px; font-weight:700;
-  border:2px solid rgba(76,175,80,.3); border-radius:20px;
-  background:var(--green-light); color:var(--green-dark); cursor:pointer;
+  border:2px solid rgba(123,111,240,.25); border-radius:20px;
+  background:var(--purple-light); color:var(--purple-dark); cursor:pointer;
   transition:background .15s, border-color .15s;
 }
 .portion-btn.active {
-  background:var(--green); color:#fff; border-color:var(--green);
+  background:var(--purple); color:#fff; border-color:var(--purple);
 }
 .food-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
 .food-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: var(--green-light);
-  border-radius: var(--radius-sm);
-  padding: 8px 10px;
-  border: 1px solid rgba(76,175,80,.2);
+  gap: 12px;
+  background: var(--card);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  box-shadow: 0 2px 8px rgba(123,111,240,0.05);
+}
+.food-icon-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--purple-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
 }
 .food-name-input {
   flex: 1;
@@ -354,34 +362,35 @@ body {
   background: transparent;
   font-family: var(--font);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
   outline: none;
   min-width: 0;
 }
 .food-grams-input {
-  width: 62px;
+  width: 58px;
   border: none;
-  background: rgba(255,255,255,.7);
-  border-radius: 6px;
+  background: var(--pink-light);
+  border-radius: 8px;
   font-family: var(--font);
   font-size: 13px;
-  font-weight: 700;
-  color: var(--green-dark);
+  font-weight: 800;
+  color: var(--pink);
   text-align: right;
-  padding: 4px 6px;
+  padding: 4px 8px;
   outline: none;
 }
 .food-unit { font-size: 12px; color: var(--muted); flex-shrink: 0; }
 .food-del  {
   background: none;
   border: none;
-  font-size: 16px;
+  font-size: 18px;
   cursor: pointer;
   color: var(--muted);
-  padding: 2px 4px;
+  padding: 4px;
   -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
+  line-height: 1;
 }
 .food-del:active { color: var(--red); }
 
@@ -393,10 +402,10 @@ body {
 .suggest-desc  { font-size:13px; color:var(--muted); margin-bottom:10px; line-height:1.5; }
 .suggest-badges { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
 .suggest-badge  { font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px;
-                  background:var(--green-light); color:var(--green-dark); }
+                  background:var(--purple-light); color:var(--purple-dark); }
 .suggest-card details { margin-bottom:12px; }
 .suggest-card details summary { font-size:13px; font-weight:700; cursor:pointer;
-                                color:var(--green-dark); margin-bottom:6px; }
+                                color:var(--purple-dark); margin-bottom:6px; }
 .suggest-ing-list { font-size:13px; color:var(--muted); padding-left:16px; margin:4px 0 0; line-height:1.8; }
 
 /* ─── Restaurant Screen ─────────────────────────────────────────── */
@@ -409,7 +418,7 @@ body {
 .rest-info  { flex:1; min-width:0; }
 .rest-name  { font-size:15px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .rest-meta  { font-size:12px; color:var(--muted); margin-top:2px; }
-.rest-dist  { margin-left:auto; font-size:12px; font-weight:700; color:var(--green-dark);
+.rest-dist  { margin-left:auto; font-size:12px; font-weight:700; color:var(--purple-dark);
               white-space:nowrap; padding-left:8px; }
 .dish-card  { background:#fff; border-radius:var(--radius-lg); box-shadow:var(--shadow);
               padding:16px; margin-bottom:12px; }
@@ -438,7 +447,7 @@ body {
 /* ─── Toast Notification ────────────────────────────────────────── */
 #toast {
   position: fixed;
-  bottom: 24px;
+  bottom: 80px;
   left: 50%;
   transform: translateX(-50%) translateY(80px);
   background: #2d3748;
@@ -455,12 +464,12 @@ body {
   box-shadow: 0 4px 16px rgba(0,0,0,.2);
 }
 #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-#toast.success { background: var(--green); }
+#toast.success { background: var(--purple); }
 #toast.error   { background: var(--red); }
 
 /* ─── Home greeting ─────────────────────────────────────────────── */
 .home-header {
-  background: linear-gradient(135deg, var(--green) 0%, #66BB6A 100%);
+  background: linear-gradient(150deg, var(--purple) 0%, #9d94f5 60%, #ff8fa8 100%);
   color: #fff;
   padding: 52px 20px 24px;
   text-align: center;
@@ -486,20 +495,20 @@ body {
 .meal-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px; }
 .meal-time   { font-size:11px; color:var(--muted); margin-bottom:2px; }
 .meal-label  { font-weight:800; font-size:16px; color:var(--text); }
-.meal-cals   { font-weight:900; color:var(--green); font-size:18px; line-height:1; }
+.meal-cals   { font-weight:900; color:var(--pink); font-size:18px; line-height:1; }
 .meal-right  { display:flex; flex-direction:column; align-items:flex-end; gap:2px; min-width:90px; }
 .btn-delete  { background:none; border:none; font-size:15px; cursor:pointer; padding:0; color:var(--muted); }
 .food-tags   { margin: 8px 0; line-height: 2; }
-.food-tag    { display:inline-block; background:var(--light-green); color:var(--green); font-size:12px;
+.food-tag    { display:inline-block; background:var(--purple-light); color:var(--purple-dark); font-size:12px;
                font-weight:600; padding:3px 10px; border-radius:20px; margin: 2px 3px 2px 0; }
 .macro-grid  { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; margin-top:4px; }
 .macro-cell  { background:#f8f8f8; border-radius:10px; padding:6px 4px; text-align:center; }
 .macro-label { font-size:10px; color:var(--muted); font-weight:700; text-transform:uppercase; margin-bottom:2px; }
 .macro-val   { font-size:15px; font-weight:800; color:var(--text); }
-.day-total   { background:var(--light-green); border-radius:12px; padding:12px 14px;
+.day-total   { background:var(--purple-light); border-radius:12px; padding:12px 14px;
                display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
 .day-total-label { font-size:13px; color:var(--muted); font-weight:600; }
-.day-total-val   { font-size:20px; font-weight:900; color:var(--green); }
+.day-total-val   { font-size:20px; font-weight:900; color:var(--pink); }
 .day-macros  { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:14px; }
 .day-macros .macro-cell { background:var(--light-green); }
 
@@ -508,7 +517,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: 9998;
-  background: linear-gradient(160deg, #2d5a30 0%, #1a3d1c 100%);
+  background: linear-gradient(160deg, #4a3fa8 0%, #2d1f6e 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -618,10 +627,10 @@ body {
                  text-transform: uppercase; color: var(--muted); margin: 10px 0 4px; }
 
 /* ─── Vitamin Focus badge ────────────────────────────────────────── */
-.nutrient-item.focused { background: var(--light-green); border-radius: 10px;
+.nutrient-item.focused { background: var(--purple-light); border-radius: 10px;
                          padding: 4px 8px; margin: 0 -8px; }
-.focus-tag { font-size: 10px; font-weight: 800; color: var(--green);
-             background: #fff; border: 1.5px solid var(--green);
+.focus-tag { font-size: 10px; font-weight: 800; color: var(--purple);
+             background: #fff; border: 1.5px solid var(--purple);
              border-radius: 20px; padding: 1px 6px; margin-left: 4px;
              vertical-align: middle; }
 
@@ -638,9 +647,121 @@ body {
 .history-hdr  { display: flex; justify-content: space-between; align-items: center;
                 padding: 14px 16px; cursor: pointer; }
 .history-date { font-weight: 800; font-size: 15px; }
-.history-cals { font-weight: 800; color: var(--green); font-size: 15px; }
+.history-cals { font-weight: 800; color: var(--pink); font-size: 15px; }
 .history-body { padding: 0 16px 12px; border-top: 1px solid var(--border); display: none; }
 .history-body.open { display: block; }
+
+/* ─── Bottom Tab Bar ────────────────────────────────────────────── */
+#bottom-tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  height: 64px;
+  background: #fff;
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 20px rgba(123,111,240,0.10);
+  display: flex;
+  align-items: stretch;
+  z-index: 100;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  -webkit-tap-highlight-color: transparent;
+  transition: color .15s;
+  padding: 8px 4px;
+}
+.tab-item:active { opacity: .75; }
+.tab-item.active { color: var(--purple); }
+.tab-icon { font-size: 22px; line-height: 1; }
+.tab-item.tab-center {
+  flex: 0 0 72px;
+  position: relative;
+}
+.tab-center-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--pink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  box-shadow: 0 4px 16px rgba(255,107,138,.4);
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 3px solid #fff;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .12s, box-shadow .12s;
+}
+.tab-center-btn:active {
+  transform: translateX(-50%) scale(.93);
+  box-shadow: 0 2px 8px rgba(255,107,138,.4);
+}
+
+/* ─── Scan Bracket Overlay ──────────────────────────────────────── */
+.photo-scan-wrap {
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #111;
+  display: none;
+}
+.photo-scan-wrap.has-photo { display: block; }
+.photo-scan-wrap #photo-preview {
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  display: block;
+  box-shadow: none;
+}
+.scan-brackets {
+  position: absolute;
+  inset: 16px;
+  pointer-events: none;
+}
+.scan-bracket {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-color: #fff;
+  border-style: solid;
+  border-width: 0;
+  opacity: .85;
+}
+.scan-bracket.tl { top: 0; left: 0; border-top-width: 3px; border-left-width: 3px; border-radius: 4px 0 0 0; }
+.scan-bracket.tr { top: 0; right: 0; border-top-width: 3px; border-right-width: 3px; border-radius: 0 4px 0 0; }
+.scan-bracket.bl { bottom: 0; left: 0; border-bottom-width: 3px; border-left-width: 3px; border-radius: 0 0 0 4px; }
+.scan-bracket.br { bottom: 0; right: 0; border-bottom-width: 3px; border-right-width: 3px; border-radius: 0 0 4px 0; }
+
+/* ─── Results slide-up panel ────────────────────────────────────── */
+#results-section { display: none; }
+#results-section.slide-up {
+  animation: slideUp .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
 </style>
 </head>
@@ -670,7 +791,7 @@ body {
         </div>
         <div class="calorie-label">kcal consumed of daily goal</div>
         <div class="progress-wrap progress-lg">
-          <div class="progress-bar" id="cal-bar" style="width:0%; background: var(--green);"></div>
+          <div class="progress-bar" id="cal-bar" style="width:0%; background: #FF6B8A;"></div>
         </div>
       </div>
 
@@ -687,14 +808,10 @@ body {
         <button class="link-btn" onclick="showScreen('screen-nutrition')">📊 See full nutrition report →</button>
       </div>
 
-      <!-- Navigation -->
+      <!-- Explore (non-tab screens) -->
       <div class="card">
-        <div class="card-title">Quick Actions</div>
+        <div class="card-title">Explore</div>
         <div class="nav-grid">
-          <button class="nav-btn primary" onclick="showScreen('screen-log')">
-            <span class="nav-icon">📷</span>
-            Log a Meal
-          </button>
           <button class="nav-btn" onclick="showScreen('screen-meals')">
             <span class="nav-icon">📋</span>
             Today's Meals
@@ -706,14 +823,6 @@ body {
           <button class="nav-btn" onclick="showScreen('screen-restaurant')">
             <span class="nav-icon">🍽️</span>
             Restaurants
-          </button>
-          <button class="nav-btn" onclick="showScreen('screen-history')">
-            <span class="nav-icon">📅</span>
-            History
-          </button>
-          <button class="nav-btn" onclick="showScreen('screen-settings')">
-            <span class="nav-icon">⚙️</span>
-            Settings
           </button>
         </div>
       </div>
@@ -751,7 +860,15 @@ body {
           <div class="upload-text">Tap to take or upload photo</div>
           <div class="upload-hint">Camera, Photo Library, or Browse</div>
         </label>
-        <img id="photo-preview" alt="Food preview">
+        <div class="photo-scan-wrap" id="photo-scan-wrap">
+          <img id="photo-preview" alt="Food preview">
+          <div class="scan-brackets">
+            <div class="scan-bracket tl"></div>
+            <div class="scan-bracket tr"></div>
+            <div class="scan-bracket bl"></div>
+            <div class="scan-bracket br"></div>
+          </div>
+        </div>
       </div>
 
       <!-- Analyze button -->
@@ -924,7 +1041,7 @@ body {
           <div class="form-hint">
             Used to analyze food photos. Get a free key (no card needed) at
             <a href="https://console.groq.com/keys" target="_blank"
-               style="color:var(--green);font-weight:700;">console.groq.com</a>
+               style="color:var(--purple);font-weight:700;">console.groq.com</a>
           </div>
         </div>
       </div>
@@ -1042,7 +1159,7 @@ body {
         </div>
         <div class="info-row">
           <span class="label">Photo AI</span>
-          <span class="val">Gemini 2.0 Flash</span>
+          <span class="val">Groq / Llama 4 Scout</span>
         </div>
         <div class="info-row">
           <span class="label">Nutrition DB</span>
@@ -1107,6 +1224,29 @@ body {
   </div><!-- /screen-restaurant -->
 
 </div><!-- /app -->
+
+<!-- ─── Bottom Tab Bar ───────────────────────────────────────────── -->
+<div id="bottom-tab-bar">
+  <button class="tab-item active" id="tab-home" onclick="tabNav('screen-home')" aria-label="Home">
+    <span class="tab-icon">🏠</span>
+    Home
+  </button>
+  <button class="tab-item" id="tab-history" onclick="tabNav('screen-history')" aria-label="History">
+    <span class="tab-icon">📅</span>
+    History
+  </button>
+  <div class="tab-item tab-center">
+    <div class="tab-center-btn" onclick="tabNav('screen-log')" role="button" aria-label="Log a Meal">📷</div>
+  </div>
+  <button class="tab-item" id="tab-nutrition" onclick="tabNav('screen-nutrition')" aria-label="Nutrition">
+    <span class="tab-icon">📊</span>
+    Nutrition
+  </button>
+  <button class="tab-item" id="tab-settings" onclick="tabNav('screen-settings')" aria-label="Settings">
+    <span class="tab-icon">⚙️</span>
+    Settings
+  </button>
+</div>
 
 <!-- ─── PIN Lock Screen ───────────────────────────────────────────── -->
 <div id="lock-screen">
@@ -1216,7 +1356,7 @@ function sumNutrient(meals, key) {
 
 function nutrientColor(pct) {
   if (pct > 100) return '#D500F9';
-  if (pct >= 75)  return '#4CAF50';
+  if (pct >= 75)  return '#7B6FF0';
   if (pct >= 25)  return '#FFC107';
   return '#F44336';
 }
@@ -1246,6 +1386,30 @@ function showScreen(id) {
   if (id === 'screen-history')   refreshHistory();
   if (id === 'screen-suggest')    initSuggestScreen();
   if (id === 'screen-restaurant') initRestaurantScreen();
+
+  updateTabBar(id);
+}
+
+// ─── Bottom Tab Bar ───────────────────────────────────────────────
+
+const TAB_MAP = {
+  'screen-home':      'tab-home',
+  'screen-history':   'tab-history',
+  'screen-nutrition': 'tab-nutrition',
+  'screen-settings':  'tab-settings',
+};
+
+function tabNav(screenId) {
+  showScreen(screenId);
+}
+
+function updateTabBar(screenId) {
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  const tabId = TAB_MAP[screenId];
+  if (tabId) {
+    const el = document.getElementById(tabId);
+    if (el) el.classList.add('active');
+  }
 }
 
 // ─── Toast ───────────────────────────────────────────────────────
@@ -1436,8 +1600,8 @@ function resetLogScreen() {
   currentPhotoBase64 = null;
   currentPhotoMime   = 'image/jpeg';
   document.getElementById('file-input').value = '';
-  document.getElementById('photo-preview').style.display = 'none';
   document.getElementById('photo-preview').src = '';
+  document.getElementById('photo-scan-wrap').classList.remove('has-photo');
   document.getElementById('upload-zone').classList.remove('has-photo');
   document.getElementById('btn-analyze').disabled = true;
   document.getElementById('spinner').style.display = 'none';
@@ -1475,7 +1639,7 @@ document.getElementById('file-input').addEventListener('change', function(e) {
       // Show preview
       const preview = document.getElementById('photo-preview');
       preview.src = resizedUrl;
-      preview.style.display = 'block';
+      document.getElementById('photo-scan-wrap').classList.add('has-photo');
       document.getElementById('upload-zone').classList.add('has-photo');
       document.getElementById('btn-analyze').disabled = false;
 
@@ -1574,7 +1738,10 @@ async function analyzePhoto() {
     }
 
     populateFoodList(foods);
-    document.getElementById('results-section').style.display = 'block';
+    const rs = document.getElementById('results-section');
+    rs.classList.add('slide-up');
+    rs.style.display = 'block';
+    setTimeout(() => rs.classList.remove('slide-up'), 350);
     document.getElementById('btn-add-log').style.display = 'flex';
 
   } catch (err) {
@@ -1668,10 +1835,36 @@ function _setupFoodAC(input) {
   });
 }
 
+function _foodEmoji(name) {
+  const n = (name || '').toLowerCase();
+  if (n.includes('chicken')) return '🍗';
+  if (n.includes('rice'))    return '🍚';
+  if (n.includes('egg'))     return '🥚';
+  if (n.includes('salad') || n.includes('spinach') || n.includes('kale')) return '🥗';
+  if (n.includes('salmon') || n.includes('tuna') || n.includes('fish'))   return '🐟';
+  if (n.includes('bread'))   return '🍞';
+  if (n.includes('apple'))   return '🍎';
+  if (n.includes('banana'))  return '🍌';
+  if (n.includes('milk') || n.includes('yogurt'))  return '🥛';
+  if (n.includes('beef') || n.includes('steak'))   return '🥩';
+  if (n.includes('pasta') || n.includes('noodle')) return '🍝';
+  if (n.includes('coffee'))  return '☕';
+  if (n.includes('potato'))  return '🥔';
+  if (n.includes('bean') || n.includes('lentil'))  return '🫘';
+  if (n.includes('broccoli') || n.includes('vegetable') || n.includes('veggie')) return '🥦';
+  if (n.includes('cheese'))  return '🧀';
+  if (n.includes('pizza'))   return '🍕';
+  if (n.includes('burger'))  return '🍔';
+  if (n.includes('shrimp') || n.includes('seafood')) return '🦐';
+  return '🥘';
+}
+
 function makeFoodItem(food = '', grams = 100, listId = 'food-list') {
   const item = document.createElement('div');
   item.className = 'food-item';
+  const emoji = _foodEmoji(food);
   item.innerHTML = `
+    <div class="food-icon-circle">${emoji}</div>
     <input type="text"   class="food-name-input"  value="${esc(food)}"  placeholder="Food name">
     <input type="number" class="food-grams-input" value="${grams}" min="1" max="2000">
     <span class="food-unit">g</span>
@@ -1846,11 +2039,11 @@ function refreshNutrition() {
   document.getElementById('nutr-summary').innerHTML = `
     <div class="card-title">Today's Summary</div>
     <div class="calorie-numbers" style="font-size:32px;">
-      <span style="color:var(--green);font-weight:800;">${cals.toLocaleString()}</span>
+      <span style="color:#FF6B8A;font-weight:800;">${cals.toLocaleString()}</span>
       <span style="color:var(--muted);font-size:18px;"> / ${goal.toLocaleString()} kcal</span>
     </div>
     <div class="progress-wrap progress-lg" style="margin:10px 0;">
-      <div class="progress-bar" style="width:${calPct}%;background:var(--green);"></div>
+      <div class="progress-bar" style="width:${calPct}%;background:#FF6B8A;"></div>
     </div>
     <div class="meal-macros">
       Protein: <span>${protein}g</span> &nbsp; Carbs: <span>${carbs}g</span> &nbsp; Fat: <span>${fat}g</span>
@@ -2427,6 +2620,8 @@ async function pinSubmit() {
 
 function unlockApp() {
   document.getElementById('lock-screen').classList.add('hidden');
+  const bar = document.getElementById('bottom-tab-bar');
+  if (bar) bar.style.display = 'flex';
   showScreen('screen-home');
 }
 
@@ -2494,6 +2689,10 @@ function loadPinSettingsUI() {
   if (!localStorage.getItem(LS_USDA)) {
     localStorage.setItem(LS_USDA, 'l4TzSP7TsYvr8IZ5d4ybJNPK6d4U8ldDuxK77POR');
   }
+
+  // Hide tab bar initially — shown after unlock
+  const bar = document.getElementById('bottom-tab-bar');
+  if (bar) bar.style.display = 'none';
 
   const storedHash = localStorage.getItem(LS_PIN_HASH);
   if (!storedHash) {
