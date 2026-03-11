@@ -1096,6 +1096,16 @@ body {
       </div>
     </div>
     <div class="content">
+      <!-- Food category pie chart -->
+      <div class="card" id="food-cat-card" style="display:none;">
+        <div style="font-weight:800;font-size:15px;margin-bottom:14px;">
+          Food Groups
+          <span style="font-size:12px;color:var(--muted);font-weight:600;"> · last 14 days</span>
+        </div>
+        <canvas id="food-cat-chart" width="220" height="220" style="display:block;margin:0 auto 16px;"></canvas>
+        <div id="food-cat-legend" style="display:flex;flex-wrap:wrap;gap:8px 14px;justify-content:center;"></div>
+      </div>
+
       <div id="history-list"></div>
     </div>
   </div>
@@ -2250,6 +2260,90 @@ function refreshNutrition() {
 
 // ─── Phase 3: History ─────────────────────────────────────────────
 
+const FOOD_CATS = {
+  'Vegetables': { color: '#4CAF50', emoji: '🥦' },
+  'Fruits':     { color: '#FF9800', emoji: '🍎' },
+  'Grains':     { color: '#FFC107', emoji: '🌾' },
+  'Proteins':   { color: '#F44336', emoji: '🥩' },
+  'Dairy':      { color: '#2196F3', emoji: '🥛' },
+  'Fats & Oils':{ color: '#9C27B0', emoji: '🥑' },
+  'Other':      { color: '#9E9E9E', emoji: '🍽️' },
+};
+
+function _foodCategory(name) {
+  const n = (name || '').toLowerCase();
+  if (/spinach|broccoli|carrot|lettuce|tomato|cucumber|pepper|onion|celery|kale|zucchini|asparagus|cabbage|cauliflower|peas|corn|mushroom|garlic|leek|radish|beet|eggplant|squash|pumpkin|sweet potato|vegetable|salad|greens|chard|arugula|capsicum|chili|bok choy|artichoke/.test(n)) return 'Vegetables';
+  if (/apple|banana|orange|grape|mango|berry|strawberry|blueberry|raspberry|watermelon|melon|pear|peach|plum|cherry|lemon|lime|pineapple|kiwi|avocado|coconut|fruit/.test(n)) return 'Fruits';
+  if (/rice|bread|pasta|noodle|wheat|oat|grain|cereal|flour|tortilla|quinoa|barley|rye|cracker|bagel|muffin|pancake|waffle|toast|wrap|roll|bun|pita|couscous|porridge/.test(n)) return 'Grains';
+  if (/chicken|beef|pork|fish|salmon|tuna|shrimp|prawn|egg|tofu|turkey|lamb|duck|crab|lobster|clam|oyster|mussel|sausage|bacon|ham|steak|meat|lentil|chickpea|edamame|tempeh|bean|legume/.test(n)) return 'Proteins';
+  if (/milk|cheese|yogurt|cream|butter|dairy|whey|kefir/.test(n)) return 'Dairy';
+  if (/\boil\b|dressing|mayo|mayonnaise|\bnuts?\b|almond|walnut|cashew|peanut|olive|lard|margarine|ghee|seed|tahini/.test(n)) return 'Fats & Oils';
+  return 'Other';
+}
+
+function _drawFoodCategoryChart(counts) {
+  const card   = document.getElementById('food-cat-card');
+  const canvas = document.getElementById('food-cat-chart');
+  const legend = document.getElementById('food-cat-legend');
+  if (!canvas) return;
+
+  const entries = Object.entries(counts).filter(([, v]) => v > 0)
+                    .sort((a, b) => b[1] - a[1]);
+  const total   = entries.reduce((s, [, v]) => s + v, 0);
+
+  if (total === 0) { card.style.display = 'none'; return; }
+  card.style.display = '';
+
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2, R = 88, ri = 50;
+
+  ctx.clearRect(0, 0, W, H);
+  let angle = -Math.PI / 2;
+
+  entries.forEach(([cat, count]) => {
+    const slice = (count / total) * 2 * Math.PI;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, R, angle, angle + slice);
+    ctx.closePath();
+    ctx.fillStyle = FOOD_CATS[cat]?.color || '#9E9E9E';
+    ctx.fill();
+    // thin white separator
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    angle += slice;
+  });
+
+  // donut hole
+  ctx.beginPath();
+  ctx.arc(cx, cy, ri, 0, 2 * Math.PI);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+
+  // center label
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#2d2d3a';
+  ctx.font = 'bold 18px Nunito, sans-serif';
+  ctx.fillText(total, cx, cy - 9);
+  ctx.font = '11px Nunito, sans-serif';
+  ctx.fillStyle = '#8888a8';
+  ctx.fillText('foods logged', cx, cy + 10);
+
+  // legend
+  legend.innerHTML = entries.map(([cat, count]) => {
+    const pct  = Math.round(count / total * 100);
+    const info = FOOD_CATS[cat] || { color: '#9E9E9E', emoji: '🍽️' };
+    return `<div style="display:flex;align-items:center;gap:5px;font-size:12px;white-space:nowrap;">
+      <span style="width:10px;height:10px;border-radius:50%;background:${info.color};flex-shrink:0;display:inline-block;"></span>
+      <span>${info.emoji} ${cat}</span>
+      <strong style="color:var(--text)">${pct}%</strong>
+    </div>`;
+  }).join('');
+}
+
 function refreshHistory() {
   const allMeals = getMeals();
   const container = document.getElementById('history-list');
@@ -2262,6 +2356,16 @@ function refreshHistory() {
   });
 
   const sortedDates = Object.keys(days).sort((a, b) => b.localeCompare(a)).slice(0, 14);
+
+  // Build category counts from last 14 days
+  const counts = Object.fromEntries(Object.keys(FOOD_CATS).map(k => [k, 0]));
+  sortedDates.forEach(date => {
+    days[date].forEach(m => (m.foods || []).forEach(f => {
+      const cat = _foodCategory(f.food || '');
+      counts[cat] = (counts[cat] || 0) + 1;
+    }));
+  });
+  _drawFoodCategoryChart(counts);
 
   if (sortedDates.length === 0) {
     container.innerHTML = `<div class="card" style="text-align:center;padding:40px 20px;">
