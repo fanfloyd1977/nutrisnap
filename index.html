@@ -1442,7 +1442,8 @@ function getMeals() {
 }
 
 function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 function todayMeals() {
@@ -2261,13 +2262,13 @@ function refreshNutrition() {
 // ─── Phase 3: History ─────────────────────────────────────────────
 
 const FOOD_CATS = {
-  'Vegetables': { color: '#6DBF6D', emoji: '🥦' },
-  'Fruits':     { color: '#FFA05C', emoji: '🍎' },
-  'Grains':     { color: '#F5C842', emoji: '🌾' },
-  'Proteins':   { color: '#F07878', emoji: '🥩' },
-  'Dairy':      { color: '#6AAFE6', emoji: '🥛' },
-  'Fats & Oils':{ color: '#B57DC8', emoji: '🥑' },
-  'Other':      { color: '#A0A8B0', emoji: '🍽️' },
+  'Vegetables': { color: '#3E9E3E', emoji: '🥦' },
+  'Fruits':     { color: '#E06820', emoji: '🍎' },
+  'Grains':     { color: '#C89A10', emoji: '🌾' },
+  'Proteins':   { color: '#CC3B3B', emoji: '🥩' },
+  'Dairy':      { color: '#2F88CC', emoji: '🥛' },
+  'Fats & Oils':{ color: '#8045A8', emoji: '🥑' },
+  'Other':      { color: '#6A7880', emoji: '🍽️' },
 };
 
 function _foodCategory(name) {
